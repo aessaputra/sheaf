@@ -9,17 +9,15 @@
 		"directory": ".svelte-kit/cloudflare"
 	},
 	"d1_databases": [
-		{ "binding": "DB", "database_name": "sheaf-db", "database_id": "local-sheaf-db" }
+		{
+			"binding": "DB",
+			"database_name": "sheaf-db",
+			"database_id": "282e79b3-b2ac-47f7-8a27-2bdbb56fae1a"
+		}
 	],
 	"r2_buckets": [{ "binding": "PDFS", "bucket_name": "sheaf-pdfs" }],
 	"secrets": {
-		"required": [
-			"ADMIN_PASSWORD",
-			"SESSION_SECRET",
-			"R2_ACCOUNT_ID",
-			"R2_ACCESS_KEY_ID",
-			"R2_SECRET_ACCESS_KEY"
-		]
+		"required": ["ADMIN_PASSWORD", "SESSION_SECRET"]
 	},
 	"workers_dev": true,
 	"preview_urls": true

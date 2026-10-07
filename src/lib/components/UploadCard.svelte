@@ -20,27 +20,14 @@
 		}
 		uploading = true;
 		try {
-			const urlRes = await fetch('/api/upload-url', {
+			const formData = new FormData();
+			formData.append('file', file);
+			const res = await fetch('/api/files', {
 				method: 'POST',
-				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({ fileName: file.name, contentType: 'application/pdf' })
+				body: formData
 			});
-			if (!urlRes.ok) throw 0;
-			const { slug, url } = (await urlRes.json()) as { slug: string; url: string };
-
-			const putRes = await fetch(url, {
-				method: 'PUT',
-				headers: { 'content-type': 'application/pdf' },
-				body: file
-			});
-			if (!putRes.ok) throw 0;
-
-			const recRes = await fetch('/api/files', {
-				method: 'POST',
-				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({ slug, fileName: file.name, sizeBytes: file.size })
-			});
-			if (!recRes.ok) throw 0;
+			if (!res.ok) throw 0;
+			const { slug } = (await res.json()) as { slug: string };
 
 			lastSlug = slug;
 			fileName = file.name;
