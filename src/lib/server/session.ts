@@ -50,5 +50,9 @@ export async function verifySessionCookie(header: string | null, secret: string)
 	if (expected.length !== token.length) return false;
 	let diff = 0;
 	for (let i = 0; i < expected.length; i++) diff |= expected.charCodeAt(i) ^ token.charCodeAt(i);
-	return diff === 0;
+	if (diff !== 0) return false;
+	const raw = new TextDecoder().decode(unb64url(payload));
+	if (!raw.startsWith('authed:')) return false;
+	const ts = Number(raw.slice(7));
+	return Number.isFinite(ts) && Date.now() - ts < MAX_AGE * 1000;
 }
