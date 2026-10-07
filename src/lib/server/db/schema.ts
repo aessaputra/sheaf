@@ -1,7 +1,9 @@
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
-export const task = sqliteTable('task', {
-	id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
-	title: text('title').notNull(),
-	priority: integer('priority').notNull().default(1)
+export const pdfFiles = sqliteTable('pdf_files', {
+	slug: text('slug').primaryKey(),
+	r2Key: text('r2_key').notNull(),
+	fileName: text('file_name').notNull(),
+	sizeBytes: integer('size_bytes').notNull(),
+	createdAt: integer('created_at').notNull()
 });
