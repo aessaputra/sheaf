@@ -13,6 +13,9 @@ declare global {
 		// interface Locals {}
 		// interface PageData {}
 		// interface PageState {}
+		interface Locals {
+			session: { authed: true } | null;
+		}
 	}
 }
 
