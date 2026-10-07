@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Trash } from 'phosphor-svelte';
+	import { TrashIcon } from 'phosphor-svelte';
 	import CopyLinkButton from './CopyLinkButton.svelte';
 
 	export interface FileEntry {
@@ -55,10 +55,10 @@
 		type="button"
 		onclick={handleDelete}
 		disabled={deleting}
-		class="inline-flex items-center rounded-[5px] border border-[#EAEAEA] px-2.5 py-1.5 text-xs text-[#9F2F2D] transition-colors hover:bg-[#FDEBEC] disabled:opacity-50"
+		class="inline-flex items-center rounded-md border border-[#EAEAEA] px-2.5 py-1.5 text-xs text-[#9F2F2D] transition-colors hover:bg-[#FDEBEC] disabled:opacity-50"
 		title="Delete file"
 	>
-		<Trash size={14} />
+		<TrashIcon size={14} />
 		<span class="sr-only">Delete {file.fileName}</span>
 	</button>
 </li>

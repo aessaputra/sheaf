@@ -1,4 +1,4 @@
-import { error, json } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { env } from 'cloudflare:workers';
 import { eq } from 'drizzle-orm';
@@ -12,5 +12,5 @@ export const DELETE: RequestHandler = async ({ locals, params }) => {
 	await env.PDFS.delete(`pdfs/${slug}.pdf`);
 	const db = getDb(env.DB);
 	await db.delete(pdfFiles).where(eq(pdfFiles.slug, slug));
-	return json({ ok: true });
+	return Response.json({ ok: true });
 };

@@ -1,4 +1,4 @@
-import { error, json } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { env } from 'cloudflare:workers';
 import { desc } from 'drizzle-orm';
@@ -36,7 +36,7 @@ export const GET: RequestHandler = async ({ locals }) => {
 		.from(pdfFiles)
 		.orderBy(desc(pdfFiles.createdAt));
 
-	return json({ files: rows });
+	return Response.json({ files: rows });
 };
 
 export const POST: RequestHandler = async ({ request, locals }) => {
@@ -76,7 +76,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 				sizeBytes: file.size,
 				createdAt: Date.now()
 			});
-			return json({ slug });
+			return Response.json({ slug });
 		} catch (e) {
 			await env.PDFS.delete(key).catch(() => {});
 			if (attempt === 0 && String((e as Error)?.message ?? e).includes('UNIQUE constraint failed'))

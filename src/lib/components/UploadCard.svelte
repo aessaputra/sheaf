@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { UploadSimple, SpinnerGap } from 'phosphor-svelte';
+	import { UploadSimpleIcon, SpinnerGapIcon } from 'phosphor-svelte';
 	import { toast } from 'svelte-sonner';
 	import CopyLinkButton from './CopyLinkButton.svelte';
 
@@ -48,18 +48,18 @@
 	}
 </script>
 
-<section class="rounded-[12px] border border-[#EAEAEA] bg-white p-6 sm:p-8">
+<section class="rounded-xl border border-[#EAEAEA] bg-white p-6 sm:p-8">
 	<h2 class="text-lg font-semibold text-[#111111]">Upload a PDF</h2>
 	<p class="mt-1 text-sm leading-[1.6] text-[#787774]">Pick a file. A share link appears here.</p>
 
 	<label
-		class="mt-6 flex cursor-pointer flex-col items-center gap-3 rounded-[8px] border border-dashed border-[#EAEAEA] bg-[#F7F6F3] px-6 py-10 text-center transition-colors hover:bg-[#EFEDE9]"
+		class="mt-6 flex cursor-pointer flex-col items-center gap-3 rounded-lg border border-dashed border-[#EAEAEA] bg-[#F7F6F3] px-6 py-10 text-center transition-colors hover:bg-[#EFEDE9]"
 	>
 		{#if uploading}
-			<SpinnerGap size={28} class="animate-spin text-[#787774]" />
+			<SpinnerGapIcon size={28} class="animate-spin text-[#787774]" />
 			<span class="text-sm text-[#787774]">Uploading…</span>
 		{:else}
-			<UploadSimple size={28} weight="bold" class="text-[#2F3437]" />
+			<UploadSimpleIcon size={28} weight="bold" class="text-[#2F3437]" />
 			<span class="text-sm font-medium text-[#2F3437]">Choose a PDF file</span>
 		{/if}
 		<input

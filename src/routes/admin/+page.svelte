@@ -4,7 +4,7 @@
 	import { superForm } from 'sveltekit-superforms';
 	import { zod4Client as zodClient } from 'sveltekit-superforms/adapters';
 	import { toast, Toaster } from 'svelte-sonner';
-	import { SignOut } from 'phosphor-svelte';
+	import { SignOutIcon } from 'phosphor-svelte';
 	import { goto } from '$app/navigation';
 	import { loginSchema } from '#lib/login-schema.ts';
 	import UploadCard from '#lib/components/UploadCard.svelte';
@@ -12,12 +12,14 @@
 
 	let { data }: PageProps = $props();
 
+	// svelte-ignore state_referenced_locally (login form takes an initial snapshot; validation is local via validateForm)
 	const { form, errors, validateForm } = superForm(data.form, {
 		validators: zodClient(loginSchema)
 	});
 
 	let loggingIn = $state(false);
 
+	// svelte-ignore state_referenced_locally (initial auth snapshot; updated explicitly on login/logout/401)
 	let authed = $state(data.authed);
 	let files = $state<FileEntry[]>([]);
 	let loading = $state(data.authed);
@@ -102,7 +104,7 @@
 		<form
 			method="POST"
 			onsubmit={handleLogin}
-			class="mt-10 max-w-sm rounded-[12px] border border-[#EAEAEA] bg-white p-6 sm:p-8"
+			class="mt-10 max-w-sm rounded-xl border border-[#EAEAEA] bg-white p-6 sm:p-8"
 		>
 			<label for="password" class="block text-sm font-medium text-[#111111]">Password</label>
 			<input
@@ -111,7 +113,7 @@
 				type="password"
 				autocomplete="current-password"
 				bind:value={$form.password}
-				class="mt-2 w-full rounded-[6px] border border-[#EAEAEA] bg-[#FBFBFA] px-3 py-2.5 text-sm text-[#111111] outline-none focus:border-[#787774]"
+				class="mt-2 w-full rounded-md border border-[#EAEAEA] bg-[#FBFBFA] px-3 py-2.5 text-sm text-[#111111] outline-none focus:border-[#787774]"
 			/>
 			{#if $errors.password}
 				<p class="mt-2 text-sm text-[#9F2F2D]">{$errors.password}</p>
@@ -119,7 +121,7 @@
 			<button
 				type="submit"
 				disabled={loggingIn}
-				class="mt-6 w-full rounded-[5px] bg-[#111111] px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-[#333333] active:scale-[0.98] disabled:opacity-50"
+				class="mt-6 w-full rounded-md bg-[#111111] px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-[#333333] active:scale-98 disabled:opacity-50"
 			>
 				{loggingIn ? 'Signing in…' : 'Sign in'}
 			</button>
@@ -137,7 +139,7 @@
 				onclick={logout}
 				class="inline-flex items-center gap-1.5 text-sm text-[#787774] transition-colors hover:text-[#111111]"
 			>
-				<SignOut size={16} />
+				<SignOutIcon size={16} />
 				Sign out
 			</button>
 		</div>
@@ -146,7 +148,7 @@
 			<UploadCard onuploaded={loadFiles} />
 		</div>
 
-		<section class="mt-8 rounded-[12px] border border-[#EAEAEA] bg-white p-6 sm:p-8">
+		<section class="mt-8 rounded-xl border border-[#EAEAEA] bg-white p-6 sm:p-8">
 			<h2 class="text-lg font-semibold text-[#111111]">All files</h2>
 			{#if loading}
 				<p class="mt-4 text-sm text-[#787774]">Loading…</p>
