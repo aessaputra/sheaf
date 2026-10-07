@@ -20,7 +20,7 @@
 
 <div class="viewer">
 	<header>
-		<span class="name" title={data.fileName}>{data.fileName}</span>
+		<h1 class="name" title={data.fileName}>{data.fileName}</h1>
 		<a href={data.streamUrl} download={data.fileName}>Download</a>
 	</header>
 	<main>
@@ -53,14 +53,24 @@
 		border-bottom: 1px solid #eaeaea;
 	}
 	.name {
+		margin: 0;
+		font-size: inherit;
+		font-weight: inherit;
 		font-family: monospace;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
 	}
 	a {
+		display: inline-flex;
+		align-items: center;
+		min-height: 44px;
 		color: #1a1a1a;
 		flex-shrink: 0;
+	}
+	a:focus-visible {
+		outline: 2px solid #1a1a1a;
+		outline-offset: 2px;
 	}
 	main {
 		flex: 1;

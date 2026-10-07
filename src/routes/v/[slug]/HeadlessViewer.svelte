@@ -88,7 +88,7 @@
 										tabindex={0}
 										role="region"
 										aria-label="PDF pages"
-										style="background-color: #ffffff; width: 100%; height: 100%; box-sizing: border-box;"
+										style="background-color: #f3f4f6; width: 100%; height: 100%; box-sizing: border-box;"
 									>
 										<ZoomGestureWrapper {documentId}>
 											<Scroller {documentId} {renderPage} />
@@ -118,6 +118,10 @@
 	.viewport {
 		flex: 1;
 		min-height: 0;
+	}
+	.viewport :global([aria-label='PDF pages']:focus-visible) {
+		outline: 2px solid #1a1a1a;
+		outline-offset: -2px;
 	}
 	.loading {
 		padding: 2rem;
