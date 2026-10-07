@@ -26,15 +26,18 @@
 				method: 'POST',
 				body: formData
 			});
-			if (!res.ok) throw 0;
+			if (!res.ok) {
+				const body = (await res.json().catch(() => null)) as { message?: string } | null;
+				throw new Error(body?.message ?? `Upload failed (${res.status}). Nothing was saved.`);
+			}
 			const { slug } = (await res.json()) as { slug: string };
 
 			lastSlug = slug;
 			fileName = file.name;
 			toast.success('File uploaded.');
 			onuploaded();
-		} catch {
-			toast.error('Upload failed. Nothing was saved.');
+		} catch (err) {
+			toast.error(err instanceof Error ? err.message : 'Upload failed. Nothing was saved.');
 		} finally {
 			uploading = false;
 			if (fileInput) fileInput.value = '';

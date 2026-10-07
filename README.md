@@ -15,19 +15,20 @@ Requires Node 20+ and a Cloudflare account for deploy.
 
 ## Environment variables
 
-| Name                   | Where             | Purpose                                    |
-| ---------------------- | ----------------- | ------------------------------------------ |
-| `ADMIN_PASSWORD`       | wrangler secret   | Single admin password for `/admin` login   |
-| `SESSION_SECRET`       | wrangler secret   | Signs the admin session cookie             |
-| `CLOUDFLARE_ACCOUNT_ID`  | local shell only  | drizzle-kit access to remote D1            |
-| `CLOUDFLARE_DATABASE_ID` | local shell only  | drizzle-kit access to remote D1            |
-| `CLOUDFLARE_D1_TOKEN`    | local shell only  | drizzle-kit access to remote D1            |
+| Name                     | Where            | Purpose                                  |
+| ------------------------ | ---------------- | ---------------------------------------- |
+| `ADMIN_PASSWORD`         | wrangler secret  | Single admin password for `/admin` login |
+| `SESSION_SECRET`         | wrangler secret  | Signs the admin session cookie           |
+| `CLOUDFLARE_ACCOUNT_ID`  | local shell only | drizzle-kit access to remote D1          |
+| `CLOUDFLARE_DATABASE_ID` | local shell only | drizzle-kit access to remote D1          |
+| `CLOUDFLARE_D1_TOKEN`    | local shell only | drizzle-kit access to remote D1          |
 
 Local dev reads `ADMIN_PASSWORD`/`SESSION_SECRET` from `.dev.vars`.
 Production reads them from worker secrets — never commit real values.
 
-Uploads go through the Worker (`POST /api/files`, multipart, 10 MB cap)
-straight into the `PDFS` R2 binding. No S3 credentials needed.
+Uploads go through the Worker (`POST /api/files`, multipart, no app-level
+size cap — platform/R2 ceiling only) straight into the `PDFS` R2 binding.
+No S3 credentials needed.
 
 ## Deploy
 

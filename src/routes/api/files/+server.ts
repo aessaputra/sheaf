@@ -6,12 +6,11 @@ import { getDb } from '#lib/server/db/index.ts';
 import { pdfFiles } from '#lib/server/db/schema.ts';
 
 const SLUG_LEN = 8;
-// ponytail: 10 MB cap, raise if users need bigger (Worker memory, not R2, is the ceiling).
-const MAX_BYTES = 10 * 1024 * 1024;
+const ALPHABET = '0123456789abcdefghjkmnpqrstuvwxyz';
 
 function makeSlug(): string {
 	const bytes = crypto.getRandomValues(new Uint8Array(SLUG_LEN));
-	return Array.from(bytes, (b) => '0123456789abcdefghjkmnpqrstuvwxyz'[b % 32]).join('');
+	return Array.from(bytes, (b) => ALPHABET[b % ALPHABET.length]).join('');
 }
 
 export const GET: RequestHandler = async ({ locals }) => {
@@ -41,7 +40,6 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	if (!name.toLowerCase().endsWith('.pdf') || file.type !== 'application/pdf') {
 		throw error(400, 'Only PDF files are accepted.');
 	}
-	if (file.size > MAX_BYTES) throw error(400, 'File too large.');
 	const slug = makeSlug();
 	const key = `pdfs/${slug}.pdf`;
 	await env.PDFS.put(key, file.stream(), {
