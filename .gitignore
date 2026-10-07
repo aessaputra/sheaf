@@ -22,9 +22,3 @@ Thumbs.db
 # Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
-
-# SDD scratch (plan workspaces, briefs, reports)
-.superpowers
-
-# git worktrees (isolated execution checkouts)
-.worktrees
