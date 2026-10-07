@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import type { PageData } from './$types';
+	import type { PageProps } from './$types';
 
-	let { data }: { data: PageData } = $props();
+	let { data }: PageProps = $props();
 	let PDFViewer: typeof import('@embedpdf/svelte-pdf-viewer').PDFViewer | undefined =
 		$state(undefined);
 

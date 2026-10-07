@@ -1,5 +1,5 @@
-const COOKIE_NAME = 'sheaf_session';
-const MAX_AGE = 60 * 60 * 24 * 7; // 7 days
+export const COOKIE_NAME = 'sheaf_session';
+export const MAX_AGE = 60 * 60 * 24 * 7; // 7 days
 
 function b64url(bytes: Uint8Array): string {
 	let s = '';
@@ -25,32 +25,28 @@ async function sign(value: string, secret: string): Promise<string> {
 	return `${value}.${b64url(new Uint8Array(sig))}`;
 }
 
-export async function createSessionCookie(secret: string, secure: boolean): Promise<string> {
+function timingSafeEqual(a: string, b: string): boolean {
+	if (a.length !== b.length) return false;
+	let diff = 0;
+	for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+	return diff === 0;
+}
+
+export async function createSessionToken(secret: string): Promise<string> {
 	const payload = b64url(new TextEncoder().encode(`authed:${Date.now()}`));
-	const token = await sign(payload, secret);
-	return `${COOKIE_NAME}=${token}; HttpOnly; Path=/; Max-Age=${MAX_AGE}; SameSite=Lax${secure ? '; Secure' : ''}`;
+	return sign(payload, secret);
 }
 
-export function clearSessionCookie(secure: boolean): string {
-	return `${COOKIE_NAME}=; HttpOnly; Path=/; Max-Age=0; SameSite=Lax${secure ? '; Secure' : ''}`;
-}
-
-export async function verifySessionCookie(header: string | null, secret: string): Promise<boolean> {
-	if (!header) return false;
-	const pair = header
-		.split(';')
-		.map((p) => p.trim())
-		.find((p) => p.startsWith(`${COOKIE_NAME}=`));
-	if (!pair) return false;
-	const token = pair.slice(COOKIE_NAME.length + 1);
+export async function verifySessionToken(
+	token: string | undefined,
+	secret: string
+): Promise<boolean> {
+	if (!token) return false;
 	const dot = token.lastIndexOf('.');
 	if (dot < 1) return false;
 	const payload = token.slice(0, dot);
 	const expected = await sign(payload, secret);
-	if (expected.length !== token.length) return false;
-	let diff = 0;
-	for (let i = 0; i < expected.length; i++) diff |= expected.charCodeAt(i) ^ token.charCodeAt(i);
-	if (diff !== 0) return false;
+	if (!timingSafeEqual(expected, token)) return false;
 	let raw: string;
 	try {
 		raw = new TextDecoder().decode(unb64url(payload));

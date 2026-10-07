@@ -1,5 +1,6 @@
 <script lang="ts">
-	import type { PageData } from './$types';
+	import { onMount } from 'svelte';
+	import type { PageProps } from './$types';
 	import { superForm } from 'sveltekit-superforms';
 	import { zod4Client as zodClient } from 'sveltekit-superforms/adapters';
 	import { toast, Toaster } from 'svelte-sonner';
@@ -9,30 +10,10 @@
 	import UploadCard from '#lib/components/UploadCard.svelte';
 	import FileRow, { type FileEntry } from '#lib/components/FileRow.svelte';
 
-	let { data }: { data: PageData } = $props();
+	let { data }: PageProps = $props();
 
-	const { form, errors, enhance } = superForm(data.form, {
-		validators: zodClient(loginSchema),
-		resetForm: false,
-		onSubmit: async ({ formData, cancel }) => {
-			cancel();
-			loggingIn = true;
-			try {
-				const res = await fetch('/api/login', {
-					method: 'POST',
-					headers: { 'content-type': 'application/json' },
-					body: JSON.stringify({ password: formData.get('password') })
-				});
-				if (!res.ok) {
-					toast.error('Invalid credentials.');
-					return;
-				}
-				authed = true;
-				$form.password = '';
-			} finally {
-				loggingIn = false;
-			}
-		}
+	const { form, errors, validateForm } = superForm(data.form, {
+		validators: zodClient(loginSchema)
 	});
 
 	let loggingIn = $state(false);
@@ -49,12 +30,35 @@
 				authed = false;
 				return;
 			}
-			if (!res.ok) throw 0;
+			if (!res.ok) throw new Error(`Load failed (${res.status}).`);
 			files = ((await res.json()) as { files: FileEntry[] }).files ?? [];
-		} catch {
-			toast.error('Could not load files.');
+		} catch (err) {
+			toast.error(err instanceof Error ? err.message : 'Could not load files.');
 		} finally {
 			loading = false;
+		}
+	}
+
+	async function handleLogin(event: SubmitEvent) {
+		event.preventDefault();
+		const { valid } = await validateForm();
+		if (!valid) return;
+		loggingIn = true;
+		try {
+			const res = await fetch('/api/login', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ password: $form.password })
+			});
+			if (!res.ok) {
+				toast.error('Invalid credentials.');
+				return;
+			}
+			authed = true;
+			$form.password = '';
+			await loadFiles();
+		} finally {
+			loggingIn = false;
 		}
 	}
 
@@ -76,8 +80,8 @@
 		goto('/');
 	}
 
-	$effect(() => {
-		if (authed) loadFiles();
+	onMount(() => {
+		if (authed) void loadFiles();
 	});
 </script>
 
@@ -97,7 +101,7 @@
 
 		<form
 			method="POST"
-			use:enhance
+			onsubmit={handleLogin}
 			class="mt-10 max-w-sm rounded-[12px] border border-[#EAEAEA] bg-white p-6 sm:p-8"
 		>
 			<label for="password" class="block text-sm font-medium text-[#111111]">Password</label>
