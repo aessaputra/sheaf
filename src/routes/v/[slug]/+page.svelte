@@ -19,18 +19,17 @@
 </svelte:head>
 
 <div class="viewer">
-	<header>
-		<h1 class="name" title={data.fileName}>{data.fileName}</h1>
-		<a href={data.streamUrl} download={data.fileName}>Download</a>
-	</header>
 	<main>
+		<h1 class="name">{data.fileName}</h1>
 		{#if importFailed}
+			<a href={data.streamUrl} download={data.fileName}>Download</a>
 			<p class="loading" role="alert">Could not load the PDF viewer.</p>
 		{:else if HeadlessViewer}
 			{#key data.streamUrl}
-				<HeadlessViewer streamUrl={data.streamUrl} />
+				<HeadlessViewer streamUrl={data.streamUrl} fileName={data.fileName} />
 			{/key}
 		{:else}
+			<a href={data.streamUrl} download={data.fileName}>Download</a>
 			<p class="loading" role="status">Loading…</p>
 		{/if}
 	</main>
@@ -44,21 +43,14 @@
 		background: #ffffff;
 		color: #1a1a1a;
 	}
-	header {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 1rem;
-		padding: 0.6rem 1rem;
-		border-bottom: 1px solid #eaeaea;
-	}
 	.name {
-		margin: 0;
-		font-size: inherit;
-		font-weight: inherit;
-		font-family: monospace;
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
 		overflow: hidden;
-		text-overflow: ellipsis;
+		clip-path: inset(50%);
 		white-space: nowrap;
 	}
 	a {
@@ -67,6 +59,7 @@
 		min-height: 44px;
 		color: #1a1a1a;
 		flex-shrink: 0;
+		margin: 0.5rem;
 	}
 	a:focus-visible {
 		outline: 2px solid #1a1a1a;

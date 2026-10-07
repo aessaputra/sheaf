@@ -7,8 +7,14 @@ const viewer = read('HeadlessViewer');
 const page = read('+page');
 assert.match(viewer, /background-color: #f3f4f6/);
 assert.match(toolbar, /color: #595959/);
-assert.match(toolbar, /class="indicator zoom-level" role="status" aria-label="Zoom level"/);
-assert.match(page, /<h1 class="name"/);
+assert.match(toolbar, /aria-label="Set zoom"/);
+assert.match(toolbar, /aria-label="Current page"/);
+assert.match(toolbar, /aria-label="Total pages"/);
+assert.match(page, /<main>\s*<h1 class="name"/);
+assert.match(page, /clip-path: inset\(50%\)/);
+assert.doesNotMatch(page, /<header>/);
+assert.match(page, /<HeadlessViewer streamUrl=\{data.streamUrl\} fileName=\{data.fileName\}/);
+assert.match(viewer, /<ViewerToolbar \{documentId\} \{streamUrl\} \{fileName\}/);
 assert.match(page, /min-height: 44px/);
 assert.match(page, /a:focus-visible/);
 assert.match(viewer, /outline-offset: -2px/);
@@ -28,5 +34,5 @@ for (const reduced of [true, false]) {
 	assert.equal(behavior, reduced ? 'instant' : 'smooth');
 }
 console.log(
-	'Viewer accessibility: gray viewport, contrast, heading, focus, download target, zoom status and reduced-motion branches PASS.'
+	'Viewer accessibility: gray viewport, contrast, heading, focus, download target, named inputs and reduced-motion branches PASS.'
 );

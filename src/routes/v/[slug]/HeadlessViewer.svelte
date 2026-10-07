@@ -14,7 +14,7 @@
 	import { ZoomGestureWrapper, ZoomPluginPackage, ZoomMode } from '@embedpdf/plugin-zoom/svelte';
 	import ViewerToolbar from './ViewerToolbar.svelte';
 
-	let { streamUrl }: { streamUrl: string } = $props();
+	let { streamUrl, fileName }: { streamUrl: string; fileName: string } = $props();
 	let engine = $state<ReturnType<typeof createPdfiumEngine>>();
 	let engineFailed = $state(false);
 
@@ -59,8 +59,10 @@
 
 <div class="pdf">
 	{#if engineFailed}
+		<a class="download" href={streamUrl} download={fileName}>Download</a>
 		<p class="loading" role="alert">Could not load the PDF engine.</p>
 	{:else if !engine}
+		<a class="download" href={streamUrl} download={fileName}>Download</a>
 		<p class="loading" role="status">Loading…</p>
 	{:else}
 		<EmbedPDF {engine} {plugins}>
@@ -70,6 +72,7 @@
 					<DocumentContent {documentId}>
 						{#snippet children(documentContent)}
 							{#if documentContent.isError}
+								<a class="download" href={streamUrl} download={fileName}>Download</a>
 								<p class="loading" role="alert">Could not open this PDF.</p>
 							{:else if documentContent.isLoaded}
 								{#snippet renderPage(page: PageLayout)}
@@ -81,7 +84,7 @@
 										<RenderLayer {documentId} pageIndex={page.pageIndex} />
 									</div>
 								{/snippet}
-								<ViewerToolbar {documentId} />
+								<ViewerToolbar {documentId} {streamUrl} {fileName} />
 								<div class="viewport">
 									<Viewport
 										{documentId}
@@ -96,11 +99,13 @@
 									</Viewport>
 								</div>
 							{:else}
+								<a class="download" href={streamUrl} download={fileName}>Download</a>
 								<p class="loading" role="status">Loading…</p>
 							{/if}
 						{/snippet}
 					</DocumentContent>
 				{:else}
+					<a class="download" href={streamUrl} download={fileName}>Download</a>
 					<p class="loading" role="status">Loading…</p>
 				{/if}
 			{/snippet}
@@ -110,6 +115,7 @@
 
 <style>
 	.pdf {
+		position: relative;
 		display: flex;
 		flex-direction: column;
 		height: 100%;
@@ -122,6 +128,18 @@
 	.viewport :global([aria-label='PDF pages']:focus-visible) {
 		outline: 2px solid #1a1a1a;
 		outline-offset: -2px;
+	}
+	.download {
+		display: inline-flex;
+		align-items: center;
+		align-self: flex-end;
+		min-height: 44px;
+		margin: 0.5rem;
+		color: #1a1a1a;
+	}
+	.download:focus-visible {
+		outline: 2px solid #1a1a1a;
+		outline-offset: 2px;
 	}
 	.loading {
 		padding: 2rem;

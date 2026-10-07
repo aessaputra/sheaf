@@ -5,9 +5,19 @@ const toolbar = readFileSync(
 	new URL('../src/routes/v/[slug]/ViewerToolbar.svelte', import.meta.url),
 	'utf8'
 );
-assert.doesNotMatch(toolbar, /<input\b|<form\b|jumpToPage|Jump to page|>Go</);
+assert.match(toolbar, /href=\{streamUrl\} download=\{fileName\}/);
+assert.ok(toolbar.indexOf('aria-label="Zoom out"') < toolbar.indexOf('>Download</a>'));
+assert.match(toolbar, /position: absolute/);
+assert.match(toolbar, /bottom: 1rem/);
+assert.match(toolbar, /left: 50%/);
+assert.match(toolbar, /translateX\(-50%\)/);
+assert.equal((toolbar.match(/<input\b/g) ?? []).length, 2);
+assert.match(toolbar, /aria-label="Current page"/);
+assert.match(toolbar, /aria-label="Set zoom"/);
+assert.match(toolbar, /popover="auto"/);
+assert.doesNotMatch(toolbar, /<form\b|>Go</);
 assert.doesNotMatch(toolbar, /Page \{|of \{scroll\.state\.totalPages\}/);
-assert.equal((toolbar.match(/<button\b/g) ?? []).length, 5);
+assert.ok((toolbar.match(/<button\b/g) ?? []).length >= 5);
 for (const icon of ['CaretLeftIcon', 'CaretRightIcon', 'MinusCircleIcon', 'PlusCircleIcon']) {
 	assert.ok(toolbar.includes(`<${icon} size={20} aria-hidden="true"`));
 }
@@ -26,7 +36,7 @@ for (const action of [
 	'scrollToNextPage(pageScrollBehavior())',
 	'zoomOut()',
 	'zoomIn()',
-	'requestZoom(ZoomMode.FitWidth)'
+	'chooseZoom(ZoomMode.FitWidth)'
 ]) {
 	assert.ok(toolbar.includes(action), `${action} remains connected`);
 }
@@ -96,6 +106,68 @@ zoom.provides = { zoomIn: () => calls.push('in') };
 scroll.state.totalPages = 0;
 assert.equal(press('+'), false);
 assert.equal(calls.length, 3);
+// Exercise real input handlers, not a parallel parser.
+const inputHandlers = ['commitPage', 'validZoom', 'commitZoom']
+	.map((name) => {
+		const body = toolbar.match(new RegExp(`function ${name}\\(\\) \\{[\\s\\S]*?\\n\\t\\}`))?.[0];
+		assert.ok(body, name);
+		return body;
+	})
+	.join('\n');
+const runInput = new Function(
+	'pageDraft',
+	'zoomDraft',
+	'scroll',
+	'zoom',
+	'pageScrollBehavior',
+	ts.transpile(inputHandlers) + '; commitPage(); commitZoom(); return { pageDraft, zoomDraft };'
+);
+for (const value of ['', ' ', '-1', '0', 'Infinity', 'NaN', '1.5', '4', '2x', '0x2', '1e0']) {
+	const applied = [];
+	const result = runInput(
+		value,
+		'',
+		{ state: { totalPages: 3 }, provides: { scrollToPage: (v) => applied.push(v) } },
+		{ provides: { requestZoom: (v) => applied.push(v) } },
+		() => 'instant'
+	);
+	assert.deepEqual(applied, []);
+	assert.deepEqual(result, { pageDraft: null, zoomDraft: null });
+}
+for (const value of [
+	'',
+	' ',
+	'-100',
+	'0',
+	'Infinity',
+	'NaN',
+	'19',
+	'6001',
+	'100x',
+	'0x64',
+	'1e2'
+]) {
+	const applied = [];
+	runInput(
+		'',
+		value,
+		{ state: { totalPages: 3 } },
+		{ provides: { requestZoom: (v) => applied.push(v) } },
+		() => 'instant'
+	);
+	assert.deepEqual(applied, []);
+}
+for (const value of ['20', '125.5', '6000']) {
+	const applied = [];
+	runInput(
+		'2',
+		value,
+		{ state: { totalPages: 3 }, provides: { scrollToPage: (v) => applied.push(v) } },
+		{ provides: { requestZoom: (v) => applied.push(v) } },
+		() => 'instant'
+	);
+	assert.deepEqual(applied, [{ pageNumber: 2, behavior: 'instant' }, Number(value) / 100]);
+}
 console.log(
-	'Viewer toolbar: no jump form; no page indicator; five accessible icon/text controls and page boundaries preserved.'
+	'Viewer toolbar: editable page/zoom, native presets, accessible controls, input guards and page boundaries PASS.'
 );
