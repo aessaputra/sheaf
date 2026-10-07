@@ -46,6 +46,9 @@
 		"#lib": "./src/lib/index.js",
 		"#lib/*": "./src/lib/*"
 	},
+	"overrides": {
+		"sharp": "^0.35.5"
+	},
 	"dependencies": {
 		"@embedpdf/core": "2.15.1",
 		"@embedpdf/engines": "2.15.1",
