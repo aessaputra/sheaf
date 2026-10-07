@@ -19,7 +19,7 @@ export const GET: RequestHandler = async ({ params, request }) => {
 	headers.set('accept-ranges', 'bytes');
 	headers.set('etag', obj.httpEtag);
 	headers.set('cache-control', 'public, max-age=31536000, immutable');
-	const range = obj.range;
+	const range = request.headers.has('range') ? obj.range : undefined;
 	if (range && 'offset' in range && range.offset !== undefined && range.length !== undefined) {
 		headers.set('content-length', String(range.length));
 		headers.set(

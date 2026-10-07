@@ -1,16 +1,9 @@
 {
 	"extends": "$app/tsconfig",
 	"compilerOptions": {
+		"checkJs": false,
 		"strict": true,
-		"types": [
-			"$app/types",
-			"./worker-configuration.d.ts",
-			"node"
-		]
+		"types": ["$app/types", "./worker-configuration.d.ts", "node"]
 	},
-	"include": [
-		"src",
-		"vite.config.ts",
-		"drizzle.config.ts"
-	]
+	"include": ["src", "vite.config.ts", "drizzle.config.ts"]
 }

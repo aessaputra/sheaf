@@ -47,14 +47,14 @@ Base (already scaffolded): SvelteKit 3.0.x, Svelte 5 (runes), TypeScript, Tailwi
 
 Added for v1:
 
-| Package | Job |
-|---|---|
-| EmbedPDF (`v2` branch) | PDF viewer: render, zoom, search, page jump |
-| `shadcn-svelte` | UI components only, copy-paste as needed |
+| Package                                              | Job                                                                                                           |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| EmbedPDF (`v2` branch)                               | PDF viewer: render, zoom, search, page jump                                                                   |
+| `shadcn-svelte`                                      | UI components only, copy-paste as needed                                                                      |
 | Phosphor icons (Svelte port, e.g. `phosphor-svelte`) | Icons. Replaces the earlier `lucide-svelte` pick to satisfy the minimalist-ui ban on Lucide/Feather/Heroicons |
-| `Superforms` + `zod` | Login form and upload validation only |
-| `svelte-sonner` | Toasts for upload / delete feedback |
-| `@aws-sdk/client-s3` (+ presigner) | Presigned PUT URLs for direct browser-to-R2 upload |
+| `Superforms` + `zod`                                 | Login form and upload validation only                                                                         |
+| `svelte-sonner`                                      | Toasts for upload / delete feedback                                                                           |
+| `@aws-sdk/client-s3` (+ presigner)                   | Presigned PUT URLs for direct browser-to-R2 upload                                                            |
 
 Skipped in v1: table libs (plain `each` is enough), state libs (Svelte 5 runes cover it), query libs, drag-and-drop libs, charts, calendars, maps, test runners. Add only on evidence: 100+ files needing sort/filter, repeated upload breakage, or a device-specific viewer failure.
 

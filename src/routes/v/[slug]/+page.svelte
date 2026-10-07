@@ -3,11 +3,14 @@
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
-	let PDFViewer: typeof import('@embedpdf/svelte-pdf-viewer').PDFViewer | undefined =
-		$state(undefined);
+	let HeadlessViewer: typeof import('./HeadlessViewer.svelte').default | undefined = $state();
+	let importFailed = $state(false);
 
-	onMount(async () => {
-		PDFViewer = (await import('@embedpdf/svelte-pdf-viewer')).PDFViewer;
+	onMount(() => {
+		import('./HeadlessViewer.svelte').then(
+			(module) => (HeadlessViewer = module.default),
+			() => (importFailed = true)
+		);
 	});
 </script>
 
@@ -21,10 +24,14 @@
 		<a href={data.streamUrl} download={data.fileName}>Download</a>
 	</header>
 	<main>
-		{#if PDFViewer}
-			<PDFViewer config={{ src: data.streamUrl }} style="width: 100%; height: 100%;" />
+		{#if importFailed}
+			<p class="loading" role="alert">Could not load the PDF viewer.</p>
+		{:else if HeadlessViewer}
+			{#key data.streamUrl}
+				<HeadlessViewer streamUrl={data.streamUrl} />
+			{/key}
 		{:else}
-			<p class="loading">Loading…</p>
+			<p class="loading" role="status">Loading…</p>
 		{/if}
 	</main>
 </div>

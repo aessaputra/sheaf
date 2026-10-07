@@ -34,9 +34,11 @@
 ### Task 1: Add headless v2 dependencies (keep old viewer installed)
 
 **Files:**
+
 - Modify: `package.json`
 
 **Interfaces:**
+
 - Consumes: nothing (npm registry, EmbedPDF v2 `2.15.1`).
 - Produces: installed packages ` @embedpdf/core`, `@embedpdf/engines`, `@embedpdf/plugin-document-manager`, `@embedpdf/plugin-viewport`, `@embedpdf/plugin-scroll`, `@embedpdf/plugin-render`, `@embedpdf/plugin-zoom` at `2.15.1`. Old `@embedpdf/svelte-pdf-viewer` stays until Task 5 so the current page keeps compiling.
 
@@ -79,9 +81,11 @@ git add package.json package-lock.json && git commit -m "chore: add EmbedPDF v2 
 ### Task 2: Minimal headless shell (render + loading/error + download)
 
 **Files:**
+
 - Modify: `src/routes/v/[slug]/+page.svelte`
 
 **Interfaces:**
+
 - Consumes: `data.fileName`, `data.streamUrl` from `+page.server.ts`; packages from Task 1.
 - Produces: working headless render pipeline (`pdfEngine` store, `plugins` array, `EmbedPDF > DocumentContent > Viewport > Scroller > RenderLayer`); `documentId`snippet scope consumed by Tasks 3-4.
 
@@ -253,10 +257,12 @@ git add src/routes/v/[slug]/+page.svelte && git commit -m "feat: replace ready-m
 ### Task 3: Page navigation toolbar (Prev/Next + indicator)
 
 **Files:**
+
 - Create: `src/routes/v/[slug]/ViewerToolbar.svelte`
 - Modify: `src/routes/v/[slug]/+page.svelte` (import + render toolbar above `Viewport`)
 
 **Interfaces:**
+
 - Consumes: `documentId: string` prop (from Task 2 `{@const documentId}` scope); `useScroll(() => documentId)` from `@embedpdf/plugin-scroll/svelte`.
 - Produces: `<ViewerToolbar {documentId} />` component; extended in Task 4 with zoom controls (same prop, no signature change).
 
@@ -306,14 +312,14 @@ Two edits in `src/routes/v/[slug]/+page.svelte`, nothing else:
 
 1. Add to the import block:
 
-```svelte
-	import ViewerToolbar from './ViewerToolbar.svelte';
+```ts
+import ViewerToolbar from './ViewerToolbar.svelte';
 ```
 
 2. Inside the `{#if documentContent.isLoaded}` block, directly above `<Viewport`, insert:
 
 ```svelte
-										<ViewerToolbar {documentId} />
+<ViewerToolbar {documentId} />
 ```
 
 - [ ] **Step 3: Run type check**
@@ -351,10 +357,12 @@ git add src/routes/v/[slug]/ViewerToolbar.svelte src/routes/v/[slug]/+page.svelt
 ### Task 4: Zoom controls + pinch/wheel gestures
 
 **Files:**
+
 - Modify: `src/routes/v/[slug]/+page.svelte` (register `ZoomPluginPackage`, wrap `Scroller` in `ZoomGestureWrapper`)
 - Modify: `src/routes/v/[slug]/ViewerToolbar.svelte` (add zoom buttons + readout)
 
 **Interfaces:**
+
 - Consumes: `documentId` prop (unchanged); `useZoom(() => documentId)`, `ZoomMode.FitWidth` from `@embedpdf/plugin-zoom/svelte`.
 - Produces: full 4-feature viewer (render + zoom + page nav + download). No new files.
 
@@ -364,8 +372,8 @@ Three edits, nothing else:
 
 1. Add to the import block:
 
-```svelte
-	import { ZoomGestureWrapper, ZoomPluginPackage } from '@embedpdf/plugin-zoom/svelte';
+```ts
+import { ZoomGestureWrapper, ZoomPluginPackage } from '@embedpdf/plugin-zoom/svelte';
 ```
 
 2. Append to the `plugins` array (after the render registration):
@@ -377,28 +385,25 @@ Three edits, nothing else:
 So the array reads:
 
 ```ts
-	const plugins = [
-		createPluginRegistration(DocumentManagerPluginPackage, {
-			initialDocuments: [{ url: data.streamUrl }]
-		}),
-		createPluginRegistration(ViewportPluginPackage),
-		createPluginRegistration(ScrollPluginPackage),
-		createPluginRegistration(RenderPluginPackage),
-		createPluginRegistration(ZoomPluginPackage)
-	];
+const plugins = [
+	createPluginRegistration(DocumentManagerPluginPackage, {
+		initialDocuments: [{ url: data.streamUrl }]
+	}),
+	createPluginRegistration(ViewportPluginPackage),
+	createPluginRegistration(ScrollPluginPackage),
+	createPluginRegistration(RenderPluginPackage),
+	createPluginRegistration(ZoomPluginPackage)
+];
 ```
 
 3. Wrap the scroller with gestures:
 
 ```svelte
-										<Viewport
-											{documentId}
-											style="background-color: #ffffff; width: 100%; height: 100%;"
-										>
-											<ZoomGestureWrapper {documentId}>
-												<Scroller {documentId} {renderPage} />
-											</ZoomGestureWrapper>
-										</Viewport>
+<Viewport {documentId} style="background-color: #ffffff; width: 100%; height: 100%;">
+	<ZoomGestureWrapper {documentId}>
+		<Scroller {documentId} {renderPage} />
+	</ZoomGestureWrapper>
+</Viewport>
 ```
 
 - [ ] **Step 2: Add zoom controls to `ViewerToolbar.svelte`**
@@ -419,17 +424,17 @@ Replace the `<script>` block with:
 Replace the toolbar `<div>` content with:
 
 ```svelte
-	<div class="toolbar">
-		<button onclick={() => scroll.provides?.scrollToPreviousPage()}>Prev</button>
-		<span>Page {scroll.state.currentPage} of {scroll.state.totalPages}</span>
-		<button onclick={() => scroll.provides?.scrollToNextPage()}>Next</button>
-		{#if zoom.provides}
-			<button onclick={() => zoom.provides?.zoomOut()}>-</button>
-			<span>{Math.round(zoom.state.currentZoomLevel * 100)}%</span>
-			<button onclick={() => zoom.provides?.zoomIn()}>+</button>
-			<button onclick={() => zoom.provides?.requestZoom(ZoomMode.FitWidth)}>Fit width</button>
-		{/if}
-	</div>
+<div class="toolbar">
+	<button onclick={() => scroll.provides?.scrollToPreviousPage()}>Prev</button>
+	<span>Page {scroll.state.currentPage} of {scroll.state.totalPages}</span>
+	<button onclick={() => scroll.provides?.scrollToNextPage()}>Next</button>
+	{#if zoom.provides}
+		<button onclick={() => zoom.provides?.zoomOut()}>-</button>
+		<span>{Math.round(zoom.state.currentZoomLevel * 100)}%</span>
+		<button onclick={() => zoom.provides?.zoomIn()}>+</button>
+		<button onclick={() => zoom.provides?.requestZoom(ZoomMode.FitWidth)}>Fit width</button>
+	{/if}
+</div>
 ```
 
 Wrap the whole `{#if scroll.provides}` as before (unchanged outer guard). No marquee zoom, no rotate, no extra modes (YAGNI).
@@ -469,9 +474,11 @@ git add src/routes/v/[slug]/+page.svelte src/routes/v/[slug]/ViewerToolbar.svelt
 ### Task 5: Remove Ready-made viewer + final verification
 
 **Files:**
+
 - Modify: `package.json` (remove `@embedpdf/svelte-pdf-viewer`)
 
 **Interfaces:**
+
 - Consumes: completed Tasks 1-4 (no source file may import `@embedpdf/svelte-pdf-viewer` anymore).
 - Produces: lean dependency set; final verified 4-feature viewer.
 
