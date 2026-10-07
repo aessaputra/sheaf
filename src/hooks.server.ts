@@ -2,7 +2,7 @@ import type { Handle } from '@sveltejs/kit/hooks';
 import { SESSION_SECRET } from '$app/env/private';
 import { verifySessionCookie } from '#lib/server/session.ts';
 
-const PUBLIC_PREFIXES = ['/', '/v/', '/api/login'];
+const PUBLIC_PREFIXES = ['/', '/v/', '/api/login', '/api/logout'];
 
 export const handle: Handle = async ({ event, resolve }) => {
 	const authed = await verifySessionCookie(event.request.headers.get('cookie'), SESSION_SECRET);

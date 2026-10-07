@@ -51,8 +51,13 @@ export async function verifySessionCookie(header: string | null, secret: string)
 	let diff = 0;
 	for (let i = 0; i < expected.length; i++) diff |= expected.charCodeAt(i) ^ token.charCodeAt(i);
 	if (diff !== 0) return false;
-	const raw = new TextDecoder().decode(unb64url(payload));
+	let raw: string;
+	try {
+		raw = new TextDecoder().decode(unb64url(payload));
+	} catch {
+		return false;
+	}
 	if (!raw.startsWith('authed:')) return false;
 	const ts = Number(raw.slice(7));
-	return Number.isFinite(ts) && Date.now() - ts < MAX_AGE * 1000;
+	return Number.isFinite(ts) && ts <= Date.now() && Date.now() - ts < MAX_AGE * 1000;
 }
