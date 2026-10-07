@@ -1,11 +1,31 @@
 import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { env } from 'cloudflare:workers';
+import { desc } from 'drizzle-orm';
 import { getDb } from '#lib/server/db/index.ts';
 import { pdfFiles } from '#lib/server/db/schema.ts';
 
-export const POST: RequestHandler = async ({ request, locals, platform }) => {
+export const GET: RequestHandler = async ({ locals }) => {
 	if (!locals.session) throw error(401, 'Unauthorized');
-	const db = getDb(platform!.env.DB);
+
+	const db = getDb(env.DB);
+
+	const rows = await db
+		.select({
+			slug: pdfFiles.slug,
+			fileName: pdfFiles.fileName,
+			sizeBytes: pdfFiles.sizeBytes,
+			createdAt: pdfFiles.createdAt
+		})
+		.from(pdfFiles)
+		.orderBy(desc(pdfFiles.createdAt));
+
+	return json({ files: rows });
+};
+
+export const POST: RequestHandler = async ({ request, locals }) => {
+	if (!locals.session) throw error(401, 'Unauthorized');
+	const db = getDb(env.DB);
 	const body = (await request.json().catch(() => null)) as {
 		slug?: unknown;
 		fileName?: unknown;

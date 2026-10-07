@@ -13,6 +13,9 @@ export const handle: Handle = async ({ event, resolve }) => {
 		path.startsWith('/admin') || (path.startsWith('/api/') && !PUBLIC_PREFIXES.includes(path));
 	if (needsAuth && !authed) {
 		if (path.startsWith('/api/')) return new Response('Unauthorized', { status: 401 });
+		// /admin serves its own login card when logged out — redirecting
+		// there would loop (/admin -> /admin?next=/admin -> ...).
+		if (path.startsWith('/admin')) return resolve(event);
 		const login = new URL('/admin', event.url);
 		login.searchParams.set('next', path);
 		return Response.redirect(login, 302);

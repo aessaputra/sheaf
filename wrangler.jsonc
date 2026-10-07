@@ -2,16 +2,25 @@
 	"$schema": "./node_modules/wrangler/config-schema.json",
 	"name": "sheaf",
 	"compatibility_date": "2026-10-07",
-	"compatibility_flags": [
-		"nodejs_als"
-	],
+	"compatibility_flags": ["nodejs_als"],
 	"main": ".svelte-kit/cloudflare/_worker.js",
 	"assets": {
 		"binding": "ASSETS",
 		"directory": ".svelte-kit/cloudflare"
 	},
-	"d1_databases": [{ "binding": "DB", "database_name": "sheaf-db", "database_id": "local-sheaf-db" }],
+	"d1_databases": [
+		{ "binding": "DB", "database_name": "sheaf-db", "database_id": "local-sheaf-db" }
+	],
 	"r2_buckets": [{ "binding": "PDFS", "bucket_name": "sheaf-pdfs" }],
+	"secrets": {
+		"required": [
+			"ADMIN_PASSWORD",
+			"SESSION_SECRET",
+			"R2_ACCOUNT_ID",
+			"R2_ACCESS_KEY_ID",
+			"R2_SECRET_ACCESS_KEY"
+		]
+	},
 	"workers_dev": true,
 	"preview_urls": true
 }
