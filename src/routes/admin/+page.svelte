@@ -28,6 +28,7 @@
 					return;
 				}
 				authed = true;
+				$form.password = '';
 			} finally {
 				loggingIn = false;
 			}
@@ -71,6 +72,7 @@
 		await fetch('/api/logout', { method: 'POST' });
 		authed = false;
 		files = [];
+		$form.password = '';
 		goto('/');
 	}
 

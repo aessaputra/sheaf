@@ -17,6 +17,13 @@ export const POST: RequestHandler = async ({ request }) => {
 	}
 	return json(
 		{ ok: true },
-		{ headers: { 'set-cookie': await createSessionCookie(SESSION_SECRET) } }
+		{
+			headers: {
+				'set-cookie': await createSessionCookie(
+					SESSION_SECRET,
+					new URL(request.url).protocol === 'https:'
+				)
+			}
+		}
 	);
 };

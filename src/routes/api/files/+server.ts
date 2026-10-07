@@ -9,8 +9,16 @@ const SLUG_LEN = 8;
 const ALPHABET = '0123456789abcdefghjkmnpqrstuvwxyz';
 
 function makeSlug(): string {
-	const bytes = crypto.getRandomValues(new Uint8Array(SLUG_LEN));
-	return Array.from(bytes, (b) => ALPHABET[b % ALPHABET.length]).join('');
+	let slug = '';
+	while (slug.length < SLUG_LEN) {
+		const bytes = crypto.getRandomValues(new Uint8Array(SLUG_LEN - slug.length));
+		for (const b of bytes) {
+			if (b > 230) continue; // rejection sampling: 231 values, 231 % 33 === 0
+			slug += ALPHABET[b % ALPHABET.length];
+			if (slug.length === SLUG_LEN) break;
+		}
+	}
+	return slug;
 }
 
 export const GET: RequestHandler = async ({ locals }) => {
@@ -37,21 +45,43 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	const file = form?.get('file');
 	if (!(file instanceof File) || file.size === 0) throw error(400, 'No file provided.');
 	const name = file.name || '';
-	if (!name.toLowerCase().endsWith('.pdf') || file.type !== 'application/pdf') {
+	if (
+		!name.toLowerCase().endsWith('.pdf') ||
+		(file.type !== '' && file.type !== 'application/pdf')
+	) {
 		throw error(400, 'Only PDF files are accepted.');
 	}
-	const slug = makeSlug();
-	const key = `pdfs/${slug}.pdf`;
-	await env.PDFS.put(key, file.stream(), {
-		httpMetadata: { contentType: 'application/pdf' }
-	});
+	const head = new Uint8Array(await file.slice(0, 5).arrayBuffer());
+	if (
+		head.length < 5 ||
+		head[0] !== 0x25 ||
+		head[1] !== 0x50 ||
+		head[2] !== 0x44 ||
+		head[3] !== 0x46
+	) {
+		throw error(400, 'Only PDF files are accepted.');
+	}
 	const db = getDb(env.DB);
-	await db.insert(pdfFiles).values({
-		slug,
-		r2Key: key,
-		fileName: name,
-		sizeBytes: file.size,
-		createdAt: Date.now()
-	});
-	return json({ slug });
+	for (let attempt = 0; ; attempt++) {
+		const slug = makeSlug();
+		const key = `pdfs/${slug}.pdf`;
+		await env.PDFS.put(key, file.stream(), {
+			httpMetadata: { contentType: 'application/pdf' }
+		});
+		try {
+			await db.insert(pdfFiles).values({
+				slug,
+				r2Key: key,
+				fileName: name,
+				sizeBytes: file.size,
+				createdAt: Date.now()
+			});
+			return json({ slug });
+		} catch (e) {
+			await env.PDFS.delete(key).catch(() => {});
+			if (attempt === 0 && String((e as Error)?.message ?? e).includes('UNIQUE constraint failed'))
+				continue;
+			throw error(500, 'Upload failed. Nothing was saved.');
+		}
+	}
 };

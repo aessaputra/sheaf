@@ -25,14 +25,14 @@ async function sign(value: string, secret: string): Promise<string> {
 	return `${value}.${b64url(new Uint8Array(sig))}`;
 }
 
-export async function createSessionCookie(secret: string): Promise<string> {
+export async function createSessionCookie(secret: string, secure: boolean): Promise<string> {
 	const payload = b64url(new TextEncoder().encode(`authed:${Date.now()}`));
 	const token = await sign(payload, secret);
-	return `${COOKIE_NAME}=${token}; HttpOnly; Path=/; Max-Age=${MAX_AGE}; SameSite=Lax; Secure`;
+	return `${COOKIE_NAME}=${token}; HttpOnly; Path=/; Max-Age=${MAX_AGE}; SameSite=Lax${secure ? '; Secure' : ''}`;
 }
 
-export function clearSessionCookie(): string {
-	return `${COOKIE_NAME}=; HttpOnly; Path=/; Max-Age=0; SameSite=Lax; Secure`;
+export function clearSessionCookie(secure: boolean): string {
+	return `${COOKIE_NAME}=; HttpOnly; Path=/; Max-Age=0; SameSite=Lax${secure ? '; Secure' : ''}`;
 }
 
 export async function verifySessionCookie(header: string | null, secret: string): Promise<boolean> {

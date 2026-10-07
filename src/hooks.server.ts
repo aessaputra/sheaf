@@ -2,23 +2,19 @@ import type { Handle } from '@sveltejs/kit/hooks';
 import { SESSION_SECRET } from '$app/env/private';
 import { verifySessionCookie } from '#lib/server/session.ts';
 
-const PUBLIC_PREFIXES = ['/', '/v/', '/api/login', '/api/logout'];
+const PUBLIC_PREFIXES = ['/api/login', '/api/logout'];
 
 export const handle: Handle = async ({ event, resolve }) => {
 	const authed = await verifySessionCookie(event.request.headers.get('cookie'), SESSION_SECRET);
 	event.locals.session = authed ? { authed: true } : null;
 
 	const path = event.url.pathname;
-	const needsAuth =
-		path.startsWith('/admin') || (path.startsWith('/api/') && !PUBLIC_PREFIXES.includes(path));
+	const isAdmin = path === '/admin' || path.startsWith('/admin/');
+	const needsAuth = isAdmin || (path.startsWith('/api/') && !PUBLIC_PREFIXES.includes(path));
 	if (needsAuth && !authed) {
 		if (path.startsWith('/api/')) return new Response('Unauthorized', { status: 401 });
-		// /admin serves its own login card when logged out — redirecting
-		// there would loop (/admin -> /admin?next=/admin -> ...).
-		if (path.startsWith('/admin')) return resolve(event);
-		const login = new URL('/admin', event.url);
-		login.searchParams.set('next', path);
-		return Response.redirect(login, 302);
+		// /admin serves its own login card when logged out.
+		return resolve(event);
 	}
 	return resolve(event);
 };

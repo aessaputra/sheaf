@@ -18,10 +18,14 @@ export const GET: RequestHandler = async ({ params, request }) => {
 	headers.set('content-type', 'application/pdf');
 	headers.set('accept-ranges', 'bytes');
 	headers.set('etag', obj.httpEtag);
+	headers.set('cache-control', 'public, max-age=31536000, immutable');
 	const range = obj.range;
 	if (range && 'offset' in range && range.offset !== undefined && range.length !== undefined) {
 		headers.set('content-length', String(range.length));
-		headers.set('content-range', `bytes ${range.offset}-${range.offset + range.length - 1}/${obj.size}`);
+		headers.set(
+			'content-range',
+			`bytes ${range.offset}-${range.offset + range.length - 1}/${obj.size}`
+		);
 		return new Response(obj.body, { status: 206, headers });
 	}
 	headers.set('content-length', String(obj.size));

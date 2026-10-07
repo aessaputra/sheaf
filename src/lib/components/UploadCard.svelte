@@ -13,7 +13,10 @@
 	async function handleChange() {
 		const file = fileInput?.files?.[0];
 		if (!file) return;
-		if (!file.name.toLowerCase().endsWith('.pdf') || file.type !== 'application/pdf') {
+		if (
+			!file.name.toLowerCase().endsWith('.pdf') ||
+			(file.type !== '' && file.type !== 'application/pdf')
+		) {
 			toast.error('Only PDF files are accepted.');
 			fileInput!.value = '';
 			return;
