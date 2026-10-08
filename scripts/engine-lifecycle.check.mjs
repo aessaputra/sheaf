@@ -47,6 +47,12 @@ async function check(unmountFirst, closeFails = false) {
 		ScrollPluginPackage: {},
 		RenderPluginPackage: {},
 		ZoomPluginPackage: {},
+		InteractionManagerPluginPackage: {},
+		SelectionPluginPackage: {},
+		AnnotationPluginPackage: {},
+		LockModeType: { All: 'all' },
+		PdfAnnotationSubtype: { LINK: 2 },
+		PdfLink: {},
 		ZoomMode: { FitWidth: 'fit-width' }
 	};
 	vm.createContext(context);

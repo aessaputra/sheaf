@@ -12,8 +12,31 @@
 	} from '@embedpdf/plugin-document-manager/svelte';
 	import { RenderLayer, RenderPluginPackage } from '@embedpdf/plugin-render/svelte';
 	import { ZoomGestureWrapper, ZoomPluginPackage, ZoomMode } from '@embedpdf/plugin-zoom/svelte';
+	import {
+		AnnotationPluginPackage,
+		AnnotationLayer,
+		LockModeType
+	} from '@embedpdf/plugin-annotation/svelte';
+	import {
+		InteractionManagerPluginPackage,
+		GlobalPointerProvider,
+		PagePointerProvider
+	} from '@embedpdf/plugin-interaction-manager/svelte';
+	import { SelectionPluginPackage } from '@embedpdf/plugin-selection/svelte';
+	import { PdfAnnotationSubtype, type PdfAnnotationObject } from '@embedpdf/models';
+	import PdfLink from './PdfLink.svelte';
+	import PdfLinkNavigation from './PdfLinkNavigation.svelte';
 	import ViewerToolbar from './ViewerToolbar.svelte';
 	import ViewerFallback from './ViewerFallback.svelte';
+
+	const linkRenderers = [
+		{
+			id: 'link',
+			matches: (annotation: PdfAnnotationObject) => annotation.type === PdfAnnotationSubtype.LINK,
+			component: PdfLink,
+			renderLocked: PdfLink
+		}
+	];
 
 	let { streamUrl, fileName }: { streamUrl: string; fileName: string } = $props();
 
@@ -56,6 +79,12 @@
 		createPluginRegistration(ViewportPluginPackage, { viewportGap: 10 }),
 		createPluginRegistration(ScrollPluginPackage, { defaultStrategy: ScrollStrategy.Vertical }),
 		createPluginRegistration(RenderPluginPackage),
+		createPluginRegistration(InteractionManagerPluginPackage),
+		createPluginRegistration(SelectionPluginPackage),
+		createPluginRegistration(AnnotationPluginPackage, {
+			locked: { type: LockModeType.All },
+			autoOpenLinks: false
+		}),
 		createPluginRegistration(ZoomPluginPackage, { defaultZoomLevel: ZoomMode.FitPage })
 	]);
 </script>
@@ -81,22 +110,32 @@
 										style:height={`${page.height}px`}
 										style:position="relative"
 									>
-										<RenderLayer {documentId} pageIndex={page.pageIndex} />
+										<PagePointerProvider {documentId} pageIndex={page.pageIndex}>
+											<RenderLayer {documentId} pageIndex={page.pageIndex} />
+											<AnnotationLayer
+												{documentId}
+												pageIndex={page.pageIndex}
+												annotationRenderers={linkRenderers}
+											/>
+										</PagePointerProvider>
 									</div>
 								{/snippet}
+								<PdfLinkNavigation />
 								<ViewerToolbar {documentId} {streamUrl} {fileName} />
 								<div class="viewport">
-									<Viewport
-										{documentId}
-										tabindex={0}
-										role="region"
-										aria-label="PDF pages"
-										style="background-color: #f3f4f6; width: 100%; height: 100%; box-sizing: border-box;"
-									>
-										<ZoomGestureWrapper {documentId}>
-											<Scroller {documentId} {renderPage} />
-										</ZoomGestureWrapper>
-									</Viewport>
+									<GlobalPointerProvider {documentId}>
+										<Viewport
+											{documentId}
+											tabindex={0}
+											role="region"
+											aria-label="PDF pages"
+											style="background-color: #f3f4f6; width: 100%; height: 100%; box-sizing: border-box;"
+										>
+											<ZoomGestureWrapper {documentId}>
+												<Scroller {documentId} {renderPage} />
+											</ZoomGestureWrapper>
+										</Viewport>
+									</GlobalPointerProvider>
 								</div>
 							{:else}
 								<ViewerFallback
