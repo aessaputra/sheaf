@@ -49,6 +49,7 @@ async function check(unmountFirst, closeFails = false) {
 		ZoomPluginPackage: {},
 		PanPluginPackage: {},
 		InteractionManagerPluginPackage: {},
+		SelectionPluginPackage: {},
 		AnnotationPluginPackage: {},
 		LockModeType: { All: 'all' },
 		PdfAnnotationSubtype: { LINK: 2 },

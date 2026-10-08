@@ -59,6 +59,7 @@
 		"@embedpdf/plugin-pan": "2.15.1",
 		"@embedpdf/plugin-render": "2.15.1",
 		"@embedpdf/plugin-scroll": "2.15.1",
+		"@embedpdf/plugin-selection": "2.15.1",
 		"@embedpdf/plugin-viewport": "2.15.1",
 		"@embedpdf/plugin-zoom": "2.15.1",
 		"oauth4webapi": "^3.8.8",

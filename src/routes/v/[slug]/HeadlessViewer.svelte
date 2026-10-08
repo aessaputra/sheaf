@@ -13,6 +13,8 @@
 	import { RenderLayer, RenderPluginPackage } from '@embedpdf/plugin-render/svelte';
 	import { ZoomGestureWrapper, ZoomPluginPackage, ZoomMode } from '@embedpdf/plugin-zoom/svelte';
 	import { PanPluginPackage } from '@embedpdf/plugin-pan/svelte';
+	import { SelectionPluginPackage } from '@embedpdf/plugin-selection/svelte';
+
 	import {
 		AnnotationPluginPackage,
 		AnnotationLayer,
@@ -79,6 +81,7 @@
 		createPluginRegistration(ScrollPluginPackage, { defaultStrategy: ScrollStrategy.Vertical }),
 		createPluginRegistration(RenderPluginPackage),
 		createPluginRegistration(InteractionManagerPluginPackage),
+		createPluginRegistration(SelectionPluginPackage),
 		createPluginRegistration(AnnotationPluginPackage, {
 			locked: { type: LockModeType.All },
 			autoOpenLinks: false
