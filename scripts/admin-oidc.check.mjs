@@ -73,7 +73,7 @@ for (const generate of ['client', 'server']) {
 }
 assert.match(
 	component,
-	/\{#if !authed\}[\s\S]*\{#if data\.oidcEnabled\}[\s\S]*href="\/api\/auth\/oidc\/start"[\s\S]*Sign in with OIDC[\s\S]*\{\/if\}[\s\S]*<form/
+	/\{#if !authed\}[\s\S]*<form[\s\S]*Sign in[\s\S]*\{#if data\.oidcEnabled\}[\s\S]*href="\/api\/auth\/oidc\/start"[\s\S]*Sign in with OIDC[\s\S]*\{\/if\}[\s\S]*<\/form/
 );
 assert.match(
 	component,

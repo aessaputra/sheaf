@@ -78,7 +78,12 @@ export const GET: RequestHandler = async ({ cookies, request, url }) => {
 			allowedSubs: env.OIDC_ALLOWED_SUBS
 		})
 	)
-		return Response.redirect(new URL('/admin?error=forbidden', url.origin), 302);
+		// NOTE: plain 302, not Response.redirect() — the latter returns an immutable
+		// response that crashes cookie attachment in SvelteKit on Workers.
+		return new Response(null, {
+			status: 302,
+			headers: { location: new URL('/admin?error=forbidden', url.origin).toString() }
+		});
 	cookies.set(COOKIE_NAME, await createSessionToken(config.sessionSecret), {
 		path: '/',
 		maxAge: MAX_AGE,
@@ -86,5 +91,8 @@ export const GET: RequestHandler = async ({ cookies, request, url }) => {
 		sameSite: 'lax',
 		secure: new URL(request.url).protocol === 'https:'
 	});
-	return Response.redirect(new URL('/admin', url.origin), 302);
+	return new Response(null, {
+		status: 302,
+		headers: { location: new URL('/admin', url.origin).toString() }
+	});
 };

@@ -236,6 +236,10 @@ try {
 		assert.equal(success.response.status, 302, `literal issuer match: ${issuer}`);
 		assert.equal(success.writes.length, 1);
 		assert.ok(success.calls.some((url) => url.endsWith('/jwks')));
+		// Regression: redirects must stay mutable so SvelteKit can attach cookies
+		// on Workers (Response.redirect() is immutable and crashes).
+		success.response.headers.append('set-cookie', 'probe=1');
+		assert.equal(success.response.headers.get('set-cookie'), 'probe=1');
 		const mismatch = await invoke({
 			...options,
 			claims: { iss: issuer.endsWith('/') ? issuer.slice(0, -1) : `${issuer}/` }

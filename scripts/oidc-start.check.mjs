@@ -173,6 +173,15 @@ try {
 	const second = await invoke();
 	for (const { response, writes } of [first, second]) {
 		assert.equal(response.status, 302);
+		// Regression: Response.redirect() returns an immutable response that crashes
+		// cookie attachment in SvelteKit on Workers. The route must return a plain
+		// 302 with a Location header so headers stay mutable.
+		assert.equal(
+			response.headers.get('location')?.startsWith('https://id.example.test/authorize?'),
+			true
+		);
+		response.headers.append('set-cookie', 'probe=1');
+		assert.equal(response.headers.get('set-cookie'), 'probe=1');
 		assert.equal(writes.length, 1);
 		const [name, token, flags] = writes[0];
 		assert.equal(name, 'sheaf_oidc');

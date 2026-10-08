@@ -48,5 +48,8 @@ export const GET: RequestHandler = async ({ cookies, request }) => {
 		sameSite: 'lax',
 		secure: new URL(request.url).protocol === 'https:'
 	});
-	return Response.redirect(url.toString(), 302);
+	// NOTE: never return Response.redirect() here. It produces an immutable
+	// response and SvelteKit crashes attaching the transaction cookie
+	// ("Can't modify immutable headers"). A plain 302 keeps headers mutable.
+	return new Response(null, { status: 302, headers: { location: url.toString() } });
 };
