@@ -87,7 +87,8 @@ const handle = new Function(
 	'zoom',
 	'scroll',
 	'HTMLElement',
-	ts.transpile(handler) + '; return handleZoomKeydown;'
+	ts.transpile('let isPresetOpen = false; let presetButton;\n' + handler) +
+		'; return handleZoomKeydown;'
 )(zoom, scroll, Element);
 function press(key, overrides = {}) {
 	let prevented = false;
@@ -126,6 +127,63 @@ zoom.provides = { zoomIn: () => calls.push('in') };
 scroll.state.totalPages = 0;
 assert.equal(press('+'), false);
 assert.equal(calls.length, 3);
+// Execute the actual dismissal/selection handlers with trigger/option focus.
+const chooseHandler = toolbar.match(
+	/function chooseZoom\(value: number \| ZoomMode\) \{[\s\S]*?\n\t\}/
+)?.[0];
+assert.ok(chooseHandler);
+assert.match(toolbar, /<button\s+bind:this=\{presetButton\}[\s\S]*?aria-label="Zoom presets"/);
+const runPreset = new Function(
+	'zoom',
+	'scroll',
+	'HTMLElement',
+	'presetButton',
+	'event',
+	'value',
+	ts.transpile(
+		'let isPresetOpen = true; let zoomDraft = "125";\n' + handler + '\n' + chooseHandler
+	) +
+		'; if (event) handleZoomKeydown(event); else chooseZoom(value); return { isPresetOpen, zoomDraft };'
+);
+for (const focused of ['trigger', 'option']) {
+	let active = focused;
+	const trigger = {
+		focus() {
+			active = 'trigger';
+		}
+	};
+	let prevented = false;
+	const result = runPreset(zoom, scroll, Element, trigger, {
+		key: 'Escape',
+		ctrlKey: false,
+		target: new Element(),
+		preventDefault() {
+			prevented = true;
+		}
+	});
+	assert.equal(result.isPresetOpen, false);
+	assert.equal(active, 'trigger');
+	assert.equal(prevented, true);
+}
+for (const value of [1.25, 'fit-page', 'fit-width']) {
+	let active = 'option';
+	const applied = [];
+	const result = runPreset(
+		{ provides: { requestZoom: (v) => applied.push(v) } },
+		scroll,
+		Element,
+		{
+			focus() {
+				active = 'trigger';
+			}
+		},
+		null,
+		value
+	);
+	assert.deepEqual(applied, [value]);
+	assert.deepEqual(result, { isPresetOpen: false, zoomDraft: null });
+	assert.equal(active, 'trigger');
+}
 // Exercise real input handlers, not a parallel parser.
 const inputHandlers = ['commitPage', 'validZoom', 'commitZoom']
 	.map((name) => {

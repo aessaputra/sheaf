@@ -39,9 +39,9 @@
 <svelte:window onresize={() => menu?.hidePopover()} />
 <button
 	type="button"
-	class="pointer-events-auto block h-full w-full cursor-pointer border-0 bg-transparent p-0 hover:bg-blue-500/15 focus-visible:bg-blue-500/15 focus-visible:outline-2 focus-visible:outline-blue-500 focus-visible:-outline-offset-2 {selected
-		? 'bg-blue-500/15 outline-2 outline-blue-500 -outline-offset-2'
-		: ''}"
+	class="pointer-events-auto block h-full w-full cursor-pointer border-0 p-0 hover:bg-blue-500/15 hover:outline-2 hover:-outline-offset-2 hover:outline-blue-500 focus-visible:bg-blue-500/15 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue-500 {selected
+		? 'bg-blue-500/15 outline-2 -outline-offset-2 outline-blue-500'
+		: 'bg-transparent'}"
 	aria-label="PDF link options"
 	aria-expanded={selected}
 	popovertarget={id}

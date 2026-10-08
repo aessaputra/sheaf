@@ -61,6 +61,7 @@
 		if (!zoomEditing) zoomDraft = null;
 	});
 	let isPresetOpen = $state(false);
+	let presetButton = $state<HTMLButtonElement>();
 	const percentages = [25, 50, 100, 125, 150, 200, 400, 800, 1600];
 
 	function commitPage() {
@@ -98,6 +99,7 @@
 		zoom.provides?.requestZoom(value);
 		zoomDraft = null;
 		isPresetOpen = false;
+		presetButton?.focus();
 	}
 
 	function pageScrollBehavior() {
@@ -105,6 +107,12 @@
 	}
 
 	function handleZoomKeydown(event: KeyboardEvent) {
+		if (event.key === 'Escape' && isPresetOpen) {
+			event.preventDefault();
+			isPresetOpen = false;
+			presetButton?.focus();
+			return;
+		}
 		if (
 			!event.ctrlKey ||
 			event.altKey ||
@@ -146,7 +154,7 @@
 					<input
 						aria-label="Set zoom"
 						inputmode="decimal"
-						class="h-8 max-h-8 min-h-8 w-10 min-w-0 rounded-md border-0 bg-transparent px-1 text-right text-sm text-gray-900 hover:bg-gray-200 focus-visible:bg-white focus-visible:outline-2 focus-visible:outline-blue-500 focus-visible:-outline-offset-2"
+						class="h-8 max-h-8 min-h-8 w-10 min-w-0 rounded-md border-0 bg-transparent px-1 text-right text-sm text-gray-900 hover:bg-gray-200 focus-visible:bg-white focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue-500"
 						value={zoomDraft ?? Math.round(zoom.state.currentZoomLevel * 100)}
 						onfocus={(event) => {
 							zoomEditing = true;
@@ -172,11 +180,12 @@
 					<span aria-hidden="true" class="text-gray-900">%</span>
 				</div>
 				<button
+					bind:this={presetButton}
 					type="button"
 					aria-label="Zoom presets"
 					aria-expanded={isPresetOpen}
 					title="Zoom presets"
-					class="inline-flex h-8 min-h-8 min-w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-[5px] text-gray-900 hover:bg-gray-200 focus-visible:outline-2 focus-visible:outline-blue-500 focus-visible:outline-offset-2"
+					class="inline-flex h-8 min-h-8 min-w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-[5px] text-gray-900 hover:bg-gray-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
 					onclick={() => (isPresetOpen = !isPresetOpen)}
 				>
 					<CaretDownIcon size={20} aria-hidden="true" />
@@ -188,7 +197,7 @@
 						tabindex="-1"
 						aria-label="Close zoom presets"
 						onclick={() => (isPresetOpen = false)}
-						onkeydown={(e) => e.key === 'Escape' && (isPresetOpen = false)}
+						onkeydown={handleZoomKeydown}
 					></div>
 					<div
 						role="group"
@@ -198,20 +207,20 @@
 						{#each percentages as percentage (percentage)}
 							<button
 								type="button"
-								class="flex h-8 min-h-8 w-full min-w-8 shrink-0 cursor-pointer items-center justify-start rounded-md border-0 bg-transparent p-[5px] text-gray-900 hover:bg-gray-200 focus-visible:outline-2 focus-visible:outline-blue-500 focus-visible:outline-offset-2"
+								class="flex h-8 min-h-8 w-full min-w-8 shrink-0 cursor-pointer items-center justify-start rounded-md border-0 bg-transparent p-[5px] text-gray-900 hover:bg-gray-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
 								onclick={() => chooseZoom(percentage / 100)}>{percentage}%</button
 							>
 						{/each}
 						<button
 							type="button"
-							class="flex h-8 min-h-8 w-full min-w-8 shrink-0 cursor-pointer items-center justify-start rounded-md border-0 bg-transparent p-[5px] text-gray-900 hover:bg-gray-200 focus-visible:outline-2 focus-visible:outline-blue-500 focus-visible:outline-offset-2"
+							class="flex h-8 min-h-8 w-full min-w-8 shrink-0 cursor-pointer items-center justify-start rounded-md border-0 bg-transparent p-[5px] text-gray-900 hover:bg-gray-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
 							onclick={() => chooseZoom(ZoomMode.FitPage)}>Fit page</button
 						>
 						<button
 							type="button"
 							aria-label="Fit width"
 							title="Fit width"
-							class="flex h-8 min-h-8 w-full min-w-8 shrink-0 cursor-pointer items-center justify-start rounded-md border-0 bg-transparent p-[5px] text-gray-900 hover:bg-gray-200 focus-visible:outline-2 focus-visible:outline-blue-500 focus-visible:outline-offset-2"
+							class="flex h-8 min-h-8 w-full min-w-8 shrink-0 cursor-pointer items-center justify-start rounded-md border-0 bg-transparent p-[5px] text-gray-900 hover:bg-gray-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
 							onclick={() => chooseZoom(ZoomMode.FitWidth)}>Fit width</button
 						>
 					</div>
@@ -221,7 +230,7 @@
 					aria-label="Zoom out"
 					title="Zoom out (Ctrl+-)"
 					aria-keyshortcuts="Control+-"
-					class="inline-flex h-8 min-h-8 min-w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-[5px] text-gray-900 hover:bg-gray-200 focus-visible:outline-2 focus-visible:outline-blue-500 focus-visible:outline-offset-2 disabled:cursor-default disabled:text-gray-400 disabled:opacity-50"
+					class="inline-flex h-8 min-h-8 min-w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-[5px] text-gray-900 hover:bg-gray-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 disabled:cursor-default disabled:text-gray-400 disabled:opacity-50"
 					onclick={() => zoom.provides?.zoomOut()}
 				>
 					<MinusCircleIcon size={20} aria-hidden="true" />
@@ -232,7 +241,7 @@
 					aria-label="Zoom in"
 					title="Zoom in (Ctrl++ or Ctrl+=)"
 					aria-keyshortcuts="Control++ Control+="
-					class="inline-flex h-8 min-h-8 min-w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-[5px] text-gray-900 hover:bg-gray-200 focus-visible:outline-2 focus-visible:outline-blue-500 focus-visible:outline-offset-2 disabled:cursor-default disabled:text-gray-400 disabled:opacity-50"
+					class="inline-flex h-8 min-h-8 min-w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-[5px] text-gray-900 hover:bg-gray-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 disabled:cursor-default disabled:text-gray-400 disabled:opacity-50"
 					onclick={() => zoom.provides?.zoomIn()}
 				>
 					<PlusCircleIcon size={20} aria-hidden="true" />
@@ -242,7 +251,7 @@
 		<a
 			href={streamUrl}
 			download={fileName}
-			class="ml-auto inline-flex min-h-8 shrink-0 items-center rounded-md px-3 text-sm whitespace-nowrap text-gray-900 hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-blue-500 focus-visible:outline-offset-2"
+			class="ml-auto inline-flex min-h-8 shrink-0 items-center rounded-md px-3 text-sm whitespace-nowrap text-gray-900 hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
 			>Download</a
 		>
 	</nav>
@@ -262,7 +271,7 @@
 				type="button"
 				aria-label="Previous page"
 				title="Previous page"
-				class="inline-flex h-8 min-h-8 min-w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-[5px] text-gray-900 hover:bg-gray-200 focus-visible:outline-2 focus-visible:outline-blue-500 focus-visible:outline-offset-2 disabled:cursor-default disabled:text-gray-400 disabled:opacity-50"
+				class="inline-flex h-8 min-h-8 min-w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-[5px] text-gray-900 hover:bg-gray-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 disabled:cursor-default disabled:text-gray-400 disabled:opacity-50"
 				disabled={scroll.state.currentPage <= 1}
 				onclick={() => scroll.provides?.scrollToPreviousPage(pageScrollBehavior())}
 			>
@@ -271,7 +280,7 @@
 			<input
 				aria-label="Current page"
 				inputmode="numeric"
-				class="h-8 max-h-8 min-h-8 w-10 min-w-0 rounded-md border border-gray-200 bg-white px-1 text-center text-sm text-gray-900 focus-visible:outline-2 focus-visible:outline-blue-500 focus-visible:-outline-offset-2"
+				class="h-8 max-h-8 min-h-8 w-10 min-w-0 rounded-md border border-gray-200 bg-white px-1 text-center text-sm text-gray-900 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue-500"
 				value={pageDraft ?? scroll.state.currentPage}
 				onfocus={(event) => {
 					pageDraft = event.currentTarget.value;
@@ -290,12 +299,14 @@
 					}
 				}}
 			/>
-			<span class="px-1 whitespace-nowrap text-gray-600 tabular-nums" aria-label="Total pages">{scroll.state.totalPages}</span>
+			<span class="px-1 whitespace-nowrap text-gray-600 tabular-nums" aria-label="Total pages"
+				>{scroll.state.totalPages}</span
+			>
 			<button
 				type="button"
 				aria-label="Next page"
 				title="Next page"
-				class="inline-flex h-8 min-h-8 min-w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-[5px] text-gray-900 hover:bg-gray-200 focus-visible:outline-2 focus-visible:outline-blue-500 focus-visible:outline-offset-2 disabled:cursor-default disabled:text-gray-400 disabled:opacity-50"
+				class="inline-flex h-8 min-h-8 min-w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-[5px] text-gray-900 hover:bg-gray-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 disabled:cursor-default disabled:text-gray-400 disabled:opacity-50"
 				disabled={scroll.state.currentPage >= scroll.state.totalPages}
 				onclick={() => scroll.provides?.scrollToNextPage(pageScrollBehavior())}
 			>

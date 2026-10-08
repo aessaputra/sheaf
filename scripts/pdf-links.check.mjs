@@ -14,6 +14,20 @@ assert.match(link, /type="button"/);
 assert.match(link, /popover="auto"/);
 assert.match(link, /Go to link/);
 assert.match(link, /hover:bg-blue-500\/15/);
+const linkClass = link.match(/<button[\s\S]*?class="([\s\S]*?)"/)?.[1];
+assert.ok(linkClass);
+const classesFor = new Function(
+	'selected',
+	'return `' + linkClass.replace('{selected', '${selected') + '`;'
+);
+for (const selected of [false, true]) {
+	const classes = classesFor(selected).split(/\s+/);
+	assert.equal(classes.includes('bg-transparent'), !selected);
+	assert.equal(classes.includes('bg-blue-500/15'), selected);
+	for (const utility of ['hover:outline-2', 'hover:-outline-offset-2', 'hover:outline-blue-500']) {
+		assert.ok(classes.includes(utility), utility);
+	}
+}
 assert.match(link, /block h-full w-full/); // Small PDF hitboxes must not inherit inline baseline offsets.
 assert.match(link, /aria-expanded=\{selected\}/);
 assert.doesNotMatch(link, /aria-label="Open PDF link" onclick=\{navigate\}/);
