@@ -39,8 +39,9 @@
 <svelte:window onresize={() => menu?.hidePopover()} />
 <button
 	type="button"
-	class="link"
-	class:selected
+	class="pointer-events-auto block h-full w-full cursor-pointer border-0 bg-transparent p-0 hover:bg-blue-500/15 focus-visible:bg-blue-500/15 focus-visible:outline-2 focus-visible:outline-blue-500 focus-visible:-outline-offset-2 {selected
+		? 'bg-blue-500/15 outline-2 outline-blue-500 -outline-offset-2'
+		: ''}"
 	aria-label="PDF link options"
 	aria-expanded={selected}
 	popovertarget={id}
@@ -50,63 +51,16 @@
 	{id}
 	bind:this={menu}
 	popover="auto"
-	class="menu"
+	class="pointer-events-auto fixed inset-auto m-0 max-w-[calc(100vw-16px)] rounded-md border border-gray-200 bg-white p-1 shadow-[0_4px_16px_rgb(0_0_0/12%)]"
 	style:left={`${left}px`}
 	style:top={`${top}px`}
 	ontoggle={(event) => (selected = event.newState === 'open')}
 >
-	<button type="button" onclick={navigate}>
+	<button
+		type="button"
+		class="inline-flex min-h-10 items-center gap-2 rounded border-0 bg-transparent px-3 text-sm text-gray-900 hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-blue-500"
+		onclick={navigate}
+	>
 		Go to link <ArrowSquareOutIcon size={16} aria-hidden="true" />
 	</button>
 </div>
-
-<style>
-	.link {
-		display: block;
-		width: 100%;
-		height: 100%;
-		padding: 0;
-		border: 0;
-		background: transparent;
-		cursor: pointer;
-		pointer-events: auto;
-	}
-	.link:hover,
-	.link:focus-visible,
-	.link.selected {
-		background: rgb(59 130 246 / 15%);
-		outline: 2px solid #3b82f6;
-		outline-offset: -2px;
-	}
-	.menu {
-		pointer-events: auto;
-		position: fixed;
-		inset: auto;
-		margin: 0;
-		padding: 4px;
-		border: 1px solid #e5e7eb;
-		border-radius: 6px;
-		background: white;
-		box-shadow: 0 4px 16px rgb(0 0 0 / 12%);
-		max-width: calc(100vw - 16px);
-	}
-	.menu button {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.5rem;
-		min-height: 40px;
-		padding: 0 12px;
-		border: 0;
-		border-radius: 4px;
-		background: transparent;
-		color: #111827;
-		font-size: 0.875rem;
-		cursor: pointer;
-	}
-	.menu button:hover {
-		background: #f3f4f6;
-	}
-	.menu button:focus-visible {
-		outline: 2px solid #3b82f6;
-	}
-</style>
