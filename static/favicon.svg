@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <title>Sheaf</title>
+  <rect width="512" height="512" rx="112" fill="#1a1a1a"/>
+  <rect x="152" y="152" width="176" height="224" rx="12" fill="#a3a3a3"/>
+  <rect x="192" y="120" width="160" height="224" rx="12" fill="#fff"/>
+  <rect x="216" y="176" width="112" height="16" rx="8" fill="#1a1a1a"/>
+  <rect x="216" y="224" width="112" height="16" rx="8" fill="#1a1a1a"/>
+  <rect x="216" y="272" width="72" height="16" rx="8" fill="#1a1a1a"/>
+</svg>

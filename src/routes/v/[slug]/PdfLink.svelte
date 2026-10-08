@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { PdfAnnotationSubtype } from '@embedpdf/models';
+	import { ArrowSquareOutIcon } from 'phosphor-svelte';
+
 	import {
 		useAnnotationCapability,
 		type AnnotationRendererProps
@@ -53,7 +55,9 @@
 	style:top={`${top}px`}
 	ontoggle={(event) => (selected = event.newState === 'open')}
 >
-	<button type="button" onclick={navigate}>Go to link ↗</button>
+	<button type="button" onclick={navigate}>
+		Go to link <ArrowSquareOutIcon size={16} aria-hidden="true" />
+	</button>
 </div>
 
 <style>
@@ -87,6 +91,9 @@
 		max-width: calc(100vw - 16px);
 	}
 	.menu button {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
 		min-height: 40px;
 		padding: 0 12px;
 		border: 0;
