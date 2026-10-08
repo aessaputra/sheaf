@@ -27,7 +27,6 @@
 	import PdfLink from './PdfLink.svelte';
 	import PdfLinkNavigation from './PdfLinkNavigation.svelte';
 	import ViewerToolbar from './ViewerToolbar.svelte';
-	import ViewerFallback from './ViewerFallback.svelte';
 
 	const linkRenderers = [
 		{
@@ -91,11 +90,12 @@
 
 <div class="pdf">
 	{#if !engine}
-		<ViewerFallback
-			{streamUrl}
-			{fileName}
-			errorMessage={engineFailed ? 'Could not load the PDF engine.' : undefined}
-		/>
+		<div class="fallback">
+			<p role={engineFailed ? 'alert' : 'status'}>
+				{engineFailed ? 'Could not load the PDF engine.' : 'Loading…'}
+			</p>
+			<a href={streamUrl} download={fileName}>Download</a>
+		</div>
 	{:else}
 		<EmbedPDF {engine} {plugins}>
 			{#snippet children({ activeDocumentId })}
@@ -137,16 +137,20 @@
 									</GlobalPointerProvider>
 								</div>
 							{:else}
-								<ViewerFallback
-									{streamUrl}
-									{fileName}
-									errorMessage={documentContent.isError ? 'Could not open this PDF.' : undefined}
-								/>
-							{/if}
+							<div class="fallback">
+								<p role={documentContent.isError ? 'alert' : 'status'}>
+									{documentContent.isError ? 'Could not open this PDF.' : 'Loading…'}
+								</p>
+								<a href={streamUrl} download={fileName}>Download</a>
+							</div>
+						{/if}
 						{/snippet}
 					</DocumentContent>
 				{:else}
-					<ViewerFallback {streamUrl} {fileName} />
+					<div class="fallback">
+						<p role="status">Loading…</p>
+						<a href={streamUrl} download={fileName}>Download</a>
+					</div>
 				{/if}
 			{/snippet}
 		</EmbedPDF>
@@ -172,5 +176,22 @@
 	.viewport :global([aria-label='PDF pages']:focus-visible) {
 		outline: 2px solid #1a1a1a;
 		outline-offset: -2px;
+	}
+	.fallback {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 1rem;
+		padding: 2rem;
+		text-align: center;
+	}
+	.fallback a {
+		display: inline-flex;
+		align-items: center;
+		min-height: 2rem;
+		padding: 0 0.75rem;
+		font-size: 0.875rem;
+		color: #111827;
+		border-radius: 6px;
 	}
 </style>

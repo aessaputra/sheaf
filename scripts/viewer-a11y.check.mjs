@@ -15,17 +15,6 @@ assert.match(page, /clip-path: inset\(50%\)/);
 assert.doesNotMatch(page, /<header>/);
 assert.match(page, /<HeadlessViewer streamUrl=\{data.streamUrl\} fileName=\{data.fileName\}/);
 assert.match(viewer, /<ViewerToolbar \{documentId\} \{streamUrl\} \{fileName\}/);
-for (const source of [page, viewer]) {
-	assert.match(source, /<ViewerFallback/);
-}
-assert.equal((page.match(/<ViewerFallback\b/g) ?? []).length, 1);
-assert.equal((viewer.match(/<ViewerFallback\b/g) ?? []).length, 3);
-const fallback = read('ViewerFallback');
-assert.match(fallback, /errorMessage\?: string/);
-assert.match(fallback, /height: 3rem/);
-assert.match(fallback, /margin-left: auto/);
-assert.match(fallback, /disabled/);
-assert.match(fallback, /background: #f3f4f6/);
 assert.match(toolbar, /padding: 0 0\.75rem/);
 assert.match(viewer, /outline-offset: -2px/);
 for (const action of ['Next', 'Previous']) {
