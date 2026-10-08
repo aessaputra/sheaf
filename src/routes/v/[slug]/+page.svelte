@@ -17,6 +17,7 @@
 
 <svelte:head>
 	<title>{data.fileName} — sheaf</title>
+	<meta name="robots" content="noindex" />
 </svelte:head>
 
 <div class="viewer">

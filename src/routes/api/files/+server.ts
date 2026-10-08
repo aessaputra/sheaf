@@ -51,9 +51,9 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	) {
 		throw error(400, 'Only PDF files are accepted.');
 	}
-	const head = new Uint8Array(await file.slice(0, 5).arrayBuffer());
+	const head = new Uint8Array(await file.slice(0, 4).arrayBuffer());
 	if (
-		head.length < 5 ||
+		head.length < 4 ||
 		head[0] !== 0x25 ||
 		head[1] !== 0x50 ||
 		head[2] !== 0x44 ||
@@ -65,9 +65,13 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	for (let attempt = 0; ; attempt++) {
 		const slug = makeSlug();
 		const key = `pdfs/${slug}.pdf`;
-		await env.PDFS.put(key, file.stream(), {
-			httpMetadata: { contentType: 'application/pdf' }
-		});
+		try {
+			await env.PDFS.put(key, file.stream(), {
+				httpMetadata: { contentType: 'application/pdf' }
+			});
+		} catch {
+			throw error(500, 'Upload failed. Nothing was saved.');
+		}
 		try {
 			await db.insert(pdfFiles).values({
 				slug,

@@ -2,6 +2,7 @@
 	import { UploadSimpleIcon, SpinnerGapIcon } from 'phosphor-svelte';
 	import { toast } from 'svelte-sonner';
 	import CopyLinkButton from './CopyLinkButton.svelte';
+	import OpenLinkButton from './OpenLinkButton.svelte';
 
 	let { onuploaded, onunauthorized }: { onuploaded: () => void; onunauthorized?: () => void } =
 		$props();
@@ -80,8 +81,9 @@
 	{#if lastSlug}
 		<div class="mt-6 border-t border-[#EAEAEA] pt-4">
 			<p class="truncate text-sm text-[#2F3437]">{fileName}</p>
-			<div class="mt-2">
+			<div class="mt-2 flex items-center gap-2">
 				<CopyLinkButton slug={lastSlug} />
+				<OpenLinkButton slug={lastSlug} />
 			</div>
 		</div>
 	{/if}

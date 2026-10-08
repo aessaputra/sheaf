@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { TrashIcon } from 'phosphor-svelte';
 	import CopyLinkButton from './CopyLinkButton.svelte';
+	import OpenLinkButton from './OpenLinkButton.svelte';
 
 	export interface FileEntry {
 		slug: string;
@@ -51,6 +52,7 @@
 		</p>
 	</div>
 	<CopyLinkButton slug={file.slug} />
+	<OpenLinkButton slug={file.slug} />
 	<button
 		type="button"
 		onclick={handleDelete}
