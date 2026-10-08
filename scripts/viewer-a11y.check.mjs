@@ -5,7 +5,7 @@ const read = (name) =>
 const toolbar = read('ViewerToolbar');
 const viewer = read('HeadlessViewer');
 const page = read('+page');
-assert.match(viewer, /background-color: #f3f4f6/);
+assert.ok(viewer.includes('bg-gray-100'));
 assert.match(toolbar, /color: #595959/);
 assert.match(toolbar, /aria-label="Set zoom"/);
 assert.match(toolbar, /aria-label="Current page"/);
@@ -15,7 +15,7 @@ assert.doesNotMatch(page, /<header>/);
 assert.match(page, /<HeadlessViewer streamUrl=\{data.streamUrl\} fileName=\{data.fileName\}/);
 assert.match(viewer, /<ViewerToolbar \{documentId\} \{streamUrl\} \{fileName\}/);
 assert.match(toolbar, /padding: 0 0\.75rem/);
-assert.match(viewer, /outline-offset: -2px/);
+assert.ok(viewer.includes('-outline-offset-2'));
 for (const action of ['Next', 'Previous']) {
 	assert.ok(toolbar.includes(`scrollTo${action}Page(pageScrollBehavior())`));
 }

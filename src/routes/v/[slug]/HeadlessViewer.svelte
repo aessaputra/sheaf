@@ -88,13 +88,18 @@
 	]);
 </script>
 
-<div class="pdf">
+<div class="relative flex h-full min-h-0 flex-col bg-white @container">
 	{#if !engine}
-		<div class="fallback">
+		<div class="flex flex-col items-center gap-4 p-8 text-center">
 			<p role={engineFailed ? 'alert' : 'status'}>
 				{engineFailed ? 'Could not load the PDF engine.' : 'Loading…'}
 			</p>
-			<a href={streamUrl} download={fileName}>Download</a>
+			<a
+						href={streamUrl}
+						download={fileName}
+						class="inline-flex min-h-8 items-center rounded-md px-3 text-sm text-gray-900 hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-blue-500"
+						>Download</a
+					>
 		</div>
 	{:else}
 		<EmbedPDF {engine} {plugins}>
@@ -121,15 +126,15 @@
 								{/snippet}
 								<PdfLinkNavigation />
 								<ViewerToolbar {documentId} {streamUrl} {fileName} />
-								<div class="viewport">
+								<div class="relative min-h-0 flex-1 overscroll-none">
 									<GlobalPointerProvider {documentId}>
 										<Viewport
 											{documentId}
 											tabindex={0}
 											role="region"
 											aria-label="PDF pages"
-											style="background-color: #f3f4f6; width: 100%; height: 100%; box-sizing: border-box;"
-										>
+											class="box-border h-full w-full bg-gray-100 focus-visible:outline-2 focus-visible:outline-neutral-900 focus-visible:-outline-offset-2"
+											>
 											<ZoomGestureWrapper {documentId}>
 												<Scroller {documentId} {renderPage} />
 											</ZoomGestureWrapper>
@@ -137,19 +142,29 @@
 									</GlobalPointerProvider>
 								</div>
 							{:else}
-								<div class="fallback">
+								<div class="flex flex-col items-center gap-4 p-8 text-center">
 									<p role={documentContent.isError ? 'alert' : 'status'}>
 										{documentContent.isError ? 'Could not open this PDF.' : 'Loading…'}
 									</p>
-									<a href={streamUrl} download={fileName}>Download</a>
+									<a
+						href={streamUrl}
+						download={fileName}
+						class="inline-flex min-h-8 items-center rounded-md px-3 text-sm text-gray-900 hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-blue-500"
+						>Download</a
+					>
 								</div>
 							{/if}
 						{/snippet}
 					</DocumentContent>
 				{:else}
-					<div class="fallback">
+					<div class="flex flex-col items-center gap-4 p-8 text-center">
 						<p role="status">Loading…</p>
-						<a href={streamUrl} download={fileName}>Download</a>
+						<a
+						href={streamUrl}
+						download={fileName}
+						class="inline-flex min-h-8 items-center rounded-md px-3 text-sm text-gray-900 hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-blue-500"
+						>Download</a
+					>
 					</div>
 				{/if}
 			{/snippet}
@@ -157,41 +172,3 @@
 	{/if}
 </div>
 
-<style>
-	.pdf {
-		position: relative;
-		display: flex;
-		flex-direction: column;
-		height: 100%;
-		min-height: 0;
-		container-type: inline-size;
-		background: #ffffff;
-	}
-	.viewport {
-		flex: 1;
-		min-height: 0;
-		position: relative;
-		overscroll-behavior: none;
-	}
-	.viewport :global([aria-label='PDF pages']:focus-visible) {
-		outline: 2px solid #1a1a1a;
-		outline-offset: -2px;
-	}
-	.fallback {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 1rem;
-		padding: 2rem;
-		text-align: center;
-	}
-	.fallback a {
-		display: inline-flex;
-		align-items: center;
-		min-height: 2rem;
-		padding: 0 0.75rem;
-		font-size: 0.875rem;
-		color: #111827;
-		border-radius: 6px;
-	}
-</style>
