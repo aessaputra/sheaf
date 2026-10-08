@@ -7,6 +7,9 @@ const toolbar = readFileSync(
 );
 assert.match(toolbar, /href=\{streamUrl\} download=\{fileName\}/);
 assert.ok(toolbar.indexOf('aria-label="Zoom out"') < toolbar.indexOf('>Download</a>'));
+assert.match(toolbar, /\.toolbar \{[^}]*padding: 0\.5rem 1\.5rem;/);
+assert.match(toolbar, /\.toolbar \{[^}]*flex-wrap: wrap;/);
+assert.match(toolbar, /\.toolbar > a \{[^}]*margin-left: auto;/);
 assert.match(toolbar, /position: absolute/);
 assert.match(toolbar, /bottom: 1rem/);
 assert.match(toolbar, /left: 50%/);

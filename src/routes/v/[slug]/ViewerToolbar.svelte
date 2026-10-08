@@ -279,11 +279,15 @@
 		align-items: center;
 		justify-content: space-between;
 		flex-shrink: 0;
+		flex-wrap: wrap;
 		gap: 0.25rem;
-		padding: 0.5rem;
+		padding: 0.5rem 1.5rem;
 		border-bottom: 1px solid #eaeaea;
 		background: #ffffff;
 		font-size: 0.85rem;
+	}
+	.toolbar > a {
+		margin-left: auto;
 	}
 	.controls {
 		display: flex;
