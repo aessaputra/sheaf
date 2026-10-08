@@ -3,14 +3,12 @@
 		CaretDownIcon,
 		CaretLeftIcon,
 		CaretRightIcon,
-		HandPalmIcon,
 		MinusCircleIcon,
 		PlusCircleIcon
 	} from 'phosphor-svelte';
 	import { useScroll } from '@embedpdf/plugin-scroll/svelte';
 	import { useViewportScrollActivity } from '@embedpdf/plugin-viewport/svelte';
 	import { useZoom, ZoomMode } from '@embedpdf/plugin-zoom/svelte';
-	import { usePan } from '@embedpdf/plugin-pan/svelte';
 
 	let {
 		documentId,
@@ -19,7 +17,6 @@
 	}: { documentId: string; streamUrl: string; fileName: string } = $props();
 	const scroll = useScroll(() => documentId);
 	const zoom = useZoom(() => documentId);
-	const pan = usePan(() => documentId);
 	const scrollActivity = useViewportScrollActivity(() => documentId);
 
 	let navVisible = $state(true);
@@ -217,17 +214,6 @@
 					<PlusCircleIcon size={20} aria-hidden="true" />
 				</button>
 			</div>
-		{/if}
-		{#if pan.provides}
-			<button
-				type="button"
-				aria-label="Toggle pan"
-				aria-pressed={pan.isPanning}
-				title="Pan (hand)"
-				onclick={() => pan.provides?.togglePan()}
-			>
-				<HandPalmIcon size={20} aria-hidden="true" />
-			</button>
 		{/if}
 		<a href={streamUrl} download={fileName}>Download</a>
 	</nav>
