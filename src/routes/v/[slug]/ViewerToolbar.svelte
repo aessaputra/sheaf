@@ -364,9 +364,16 @@
 		outline-offset: -2px;
 		background: #ffffff;
 	}
+	button[popovertarget='zoom-presets'] {
+		anchor-name: --zoom-presets;
+	}
 	.presets {
-		inset: 4rem auto auto 0.5rem;
-		margin: 0;
+		position-anchor: --zoom-presets;
+		inset: auto;
+		top: anchor(bottom);
+		left: anchor(left);
+		position-try-fallbacks: flip-inline;
+		margin: 0.5rem 0 0;
 		max-height: calc(100dvh - 5rem);
 		overflow: auto;
 		min-width: 10rem;
@@ -375,6 +382,12 @@
 		border-radius: 8px;
 		background: white;
 		box-shadow: 0 2px 8px #0000001a;
+	}
+	@supports not (position-anchor: --zoom-presets) {
+		.presets {
+			inset: 3.5rem auto auto 1rem;
+			margin: 0;
+		}
 	}
 	.presets button {
 		display: flex;

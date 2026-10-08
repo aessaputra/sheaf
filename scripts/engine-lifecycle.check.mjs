@@ -8,6 +8,7 @@ const component = readFileSync(
 	new URL('../src/routes/v/[slug]/HeadlessViewer.svelte', import.meta.url),
 	'utf8'
 );
+assert.match(component, /defaultZoomLevel: ZoomMode\.FitPage/);
 const script = component.match(/<script lang="ts">([\s\S]*?)<\/script>/)[1];
 async function check(unmountFirst, closeFails = false) {
 	let resolve;

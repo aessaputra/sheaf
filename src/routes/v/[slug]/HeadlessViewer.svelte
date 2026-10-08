@@ -55,7 +55,7 @@
 		createPluginRegistration(ViewportPluginPackage, { viewportGap: 10 }),
 		createPluginRegistration(ScrollPluginPackage, { defaultStrategy: ScrollStrategy.Vertical }),
 		createPluginRegistration(RenderPluginPackage),
-		createPluginRegistration(ZoomPluginPackage, { defaultZoomLevel: ZoomMode.FitWidth })
+		createPluginRegistration(ZoomPluginPackage, { defaultZoomLevel: ZoomMode.FitPage })
 	]);
 </script>
 
