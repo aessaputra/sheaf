@@ -3,7 +3,8 @@
 	import { toast } from 'svelte-sonner';
 	import CopyLinkButton from './CopyLinkButton.svelte';
 
-	let { onuploaded }: { onuploaded: () => void } = $props();
+	let { onuploaded, onunauthorized }: { onuploaded: () => void; onunauthorized?: () => void } =
+		$props();
 
 	let uploading = $state(false);
 	let lastSlug = $state<string | null>(null);
@@ -29,6 +30,10 @@
 				method: 'POST',
 				body: formData
 			});
+			if (res.status === 401) {
+				onunauthorized?.();
+				return;
+			}
 			if (!res.ok) {
 				const body = (await res.json().catch(() => null)) as { message?: string } | null;
 				throw new Error(body?.message ?? `Upload failed (${res.status}). Nothing was saved.`);

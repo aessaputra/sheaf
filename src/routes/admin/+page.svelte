@@ -22,20 +22,31 @@
 	// svelte-ignore state_referenced_locally (initial auth snapshot; updated explicitly on login/logout/401)
 	let authed = $state(data.authed);
 	let files = $state<FileEntry[]>([]);
+	// svelte-ignore state_referenced_locally (initial auth snapshot; loading is reset explicitly in loadFiles)
 	let loading = $state(data.authed);
+	let loadError = $state<string | null>(null);
+
+	function goToLogin(message?: string) {
+		authed = false;
+		files = [];
+		loading = false;
+		loadError = null;
+		if (message) toast.error(message);
+	}
 
 	async function loadFiles() {
 		loading = true;
+		loadError = null;
 		try {
 			const res = await fetch('/api/files');
 			if (res.status === 401) {
-				authed = false;
+				goToLogin('Session expired. Please sign in again.');
 				return;
 			}
 			if (!res.ok) throw new Error(`Load failed (${res.status}).`);
 			files = ((await res.json()) as { files: FileEntry[] }).files ?? [];
 		} catch (err) {
-			toast.error(err instanceof Error ? err.message : 'Could not load files.');
+			loadError = err instanceof Error ? err.message : 'Could not load files.';
 		} finally {
 			loading = false;
 		}
@@ -59,13 +70,27 @@
 			authed = true;
 			$form.password = '';
 			await loadFiles();
+		} catch {
+			toast.error('Network error. Please try again.');
 		} finally {
 			loggingIn = false;
 		}
 	}
 
 	async function handleDelete(slug: string) {
-		const res = await fetch(`/api/files/${slug}`, { method: 'DELETE' });
+		const target = files.find((f) => f.slug === slug);
+		if (!confirm(`Delete "${target?.fileName ?? slug}"? This cannot be undone.`)) return;
+		let res: Response;
+		try {
+			res = await fetch(`/api/files/${slug}`, { method: 'DELETE' });
+		} catch {
+			toast.error('Network error. File was not deleted.');
+			return;
+		}
+		if (res.status === 401) {
+			goToLogin('Session expired. Please sign in again.');
+			return;
+		}
 		if (!res.ok) {
 			toast.error('Delete failed.');
 			return;
@@ -76,8 +101,7 @@
 
 	async function logout() {
 		await fetch('/api/logout', { method: 'POST' });
-		authed = false;
-		files = [];
+		goToLogin();
 		$form.password = '';
 		goto('/');
 	}
@@ -145,13 +169,25 @@
 		</div>
 
 		<div class="mt-10">
-			<UploadCard onuploaded={loadFiles} />
+			<UploadCard
+				onuploaded={loadFiles}
+				onunauthorized={() => goToLogin('Session expired. Please sign in again.')}
+			/>
 		</div>
 
 		<section class="mt-8 rounded-xl border border-[#EAEAEA] bg-white p-6 sm:p-8">
 			<h2 class="text-lg font-semibold text-[#111111]">All files</h2>
 			{#if loading}
 				<p class="mt-4 text-sm text-[#787774]">Loading…</p>
+			{:else if loadError}
+				<p class="mt-4 text-sm leading-[1.6] text-[#9F2F2D]">{loadError}</p>
+				<button
+					type="button"
+					onclick={loadFiles}
+					class="mt-4 rounded-md border border-[#EAEAEA] px-4 py-2 text-sm font-medium text-[#111111] transition-colors hover:bg-[#F7F6F3]"
+				>
+					Try again
+				</button>
 			{:else if files.length === 0}
 				<p class="mt-4 text-sm leading-[1.6] text-[#787774]">No files yet. Upload one above.</p>
 			{:else}
