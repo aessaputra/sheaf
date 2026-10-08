@@ -18,9 +18,20 @@ assert.match(toolbar, /popover="auto"/);
 assert.doesNotMatch(toolbar, /<form\b|>Go</);
 assert.doesNotMatch(toolbar, /Page \{|of \{scroll\.state\.totalPages\}/);
 assert.ok((toolbar.match(/<button\b/g) ?? []).length >= 5);
-for (const icon of ['CaretLeftIcon', 'CaretRightIcon', 'MinusCircleIcon', 'PlusCircleIcon']) {
+for (const icon of [
+	'CaretLeftIcon',
+	'CaretRightIcon',
+	'MinusCircleIcon',
+	'PlusCircleIcon',
+	'CaretDownIcon'
+]) {
 	assert.ok(toolbar.includes(`<${icon} size={20} aria-hidden="true"`));
 }
+// Kaizen 2 (RED): floating nav hidden entirely when totalPages <= 1.
+assert.match(toolbar, /scroll\.state\.totalPages > 1/);
+assert.doesNotMatch(toolbar, /⌄/);
+// Kaizen 3 (RED): Download link has comfortable horizontal padding; buttons keep theirs.
+assert.match(toolbar, /a \{[\s\S]*?padding: 0 0\.75rem/);
 for (const name of ['Previous page', 'Next page', 'Zoom out', 'Zoom in', 'Fit width']) {
 	assert.ok(toolbar.includes(`aria-label="${name}"`));
 	assert.ok(toolbar.includes(`title="${name}`));
@@ -168,6 +179,16 @@ for (const value of ['20', '125.5', '6000']) {
 	);
 	assert.deepEqual(applied, [{ pageNumber: 2, behavior: 'instant' }, Number(value) / 100]);
 }
+// Kaizen 1 (RED): floating nav auto-hides after 4000ms idle, reappears on activity/hover/focus.
+assert.match(toolbar, /useViewportScrollActivity/);
+assert.match(toolbar, /from '@embedpdf\/plugin-viewport\/svelte'/);
+assert.match(toolbar, /setTimeout\([\s\S]*?,\s*4000\)/);
+assert.match(toolbar, /clearTimeout/);
+assert.match(toolbar, /onmouseenter/);
+assert.match(toolbar, /onmouseleave/);
+assert.match(toolbar, /onfocusin/);
+assert.match(toolbar, /onfocusout/);
+assert.match(toolbar, /transition: opacity/);
 console.log(
 	'Viewer toolbar: editable page/zoom, native presets, accessible controls, input guards and page boundaries PASS.'
 );

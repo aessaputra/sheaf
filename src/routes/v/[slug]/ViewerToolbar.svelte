@@ -1,6 +1,13 @@
 <script lang="ts">
-	import { CaretLeftIcon, CaretRightIcon, MinusCircleIcon, PlusCircleIcon } from 'phosphor-svelte';
+	import {
+		CaretDownIcon,
+		CaretLeftIcon,
+		CaretRightIcon,
+		MinusCircleIcon,
+		PlusCircleIcon
+	} from 'phosphor-svelte';
 	import { useScroll } from '@embedpdf/plugin-scroll/svelte';
+	import { useViewportScrollActivity } from '@embedpdf/plugin-viewport/svelte';
 	import { useZoom, ZoomMode } from '@embedpdf/plugin-zoom/svelte';
 
 	let {
@@ -10,6 +17,40 @@
 	}: { documentId: string; streamUrl: string; fileName: string } = $props();
 	const scroll = useScroll(() => documentId);
 	const zoom = useZoom(() => documentId);
+	const scrollActivity = useViewportScrollActivity(() => documentId);
+
+	let navVisible = $state(true);
+	let hideTimer: ReturnType<typeof setTimeout> | null = null;
+
+	function startHideTimer() {
+		if (hideTimer) clearTimeout(hideTimer);
+		hideTimer = setTimeout(() => {
+			navVisible = false;
+		}, 4000);
+	}
+
+	function showNav() {
+		navVisible = true;
+		startHideTimer();
+	}
+
+	function holdNav() {
+		// Hovering or focusing the nav cancels the hide timer; it stays visible.
+		navVisible = true;
+		if (hideTimer) clearTimeout(hideTimer);
+	}
+
+	// Scroll activity reappears the nav and restarts the hide timer (v2 onScrollActivity).
+	$effect(() => {
+		if (scrollActivity.current.isScrolling) showNav();
+	});
+
+	$effect(() => {
+		startHideTimer();
+		return () => {
+			if (hideTimer) clearTimeout(hideTimer);
+		};
+	});
 
 	let pageDraft = $state<string | null>(null);
 	let zoomDraft = $state<string | null>(null);
@@ -129,8 +170,10 @@
 					type="button"
 					aria-label="Zoom presets"
 					title="Zoom presets"
-					popovertarget="zoom-presets">⌄</button
+					popovertarget="zoom-presets"
 				>
+					<CaretDownIcon size={20} aria-hidden="true" />
+				</button>
 				<div
 					bind:this={presetMenu}
 					id="zoom-presets"
@@ -174,49 +217,60 @@
 		{/if}
 		<a href={streamUrl} download={fileName}>Download</a>
 	</nav>
-	<div class="controls navigation" role="group" aria-label="Page navigation">
-		<button
-			type="button"
-			aria-label="Previous page"
-			title="Previous page"
-			disabled={scroll.state.currentPage <= 1}
-			onclick={() => scroll.provides?.scrollToPreviousPage(pageScrollBehavior())}
+	{#if scroll.state.totalPages > 1}
+		<div
+			class="controls navigation"
+			class:hidden={!navVisible}
+			role="group"
+			aria-label="Page navigation"
+			onmouseenter={holdNav}
+			onmouseleave={startHideTimer}
+			onfocusin={holdNav}
+			onfocusout={startHideTimer}
 		>
-			<CaretLeftIcon size={20} aria-hidden="true" />
-		</button>
-		<input
-			class="page-input"
-			aria-label="Current page"
-			inputmode="numeric"
-			value={pageDraft ?? scroll.state.currentPage}
-			onfocus={(event) => {
-				pageDraft = event.currentTarget.value;
-				event.currentTarget.select();
-			}}
-			oninput={(event) => (pageDraft = event.currentTarget.value)}
-			onblur={commitPage}
-			onkeydown={(event) => {
-				if (event.isComposing) return;
-				if (event.key === 'Enter') {
-					event.preventDefault();
-					event.currentTarget.blur();
-				} else if (event.key === 'Escape') {
-					pageDraft = null;
-					event.currentTarget.blur();
-				}
-			}}
-		/>
-		<span class="indicator" aria-label="Total pages">{scroll.state.totalPages}</span>
-		<button
-			type="button"
-			aria-label="Next page"
-			title="Next page"
-			disabled={scroll.state.currentPage >= scroll.state.totalPages}
-			onclick={() => scroll.provides?.scrollToNextPage(pageScrollBehavior())}
-		>
-			<CaretRightIcon size={20} aria-hidden="true" />
-		</button>
-	</div>
+			<button
+				type="button"
+				aria-label="Previous page"
+				title="Previous page"
+				disabled={scroll.state.currentPage <= 1}
+				onclick={() => scroll.provides?.scrollToPreviousPage(pageScrollBehavior())}
+			>
+				<CaretLeftIcon size={20} aria-hidden="true" />
+			</button>
+			<input
+				class="page-input"
+				aria-label="Current page"
+				inputmode="numeric"
+				value={pageDraft ?? scroll.state.currentPage}
+				onfocus={(event) => {
+					pageDraft = event.currentTarget.value;
+					event.currentTarget.select();
+				}}
+				oninput={(event) => (pageDraft = event.currentTarget.value)}
+				onblur={commitPage}
+				onkeydown={(event) => {
+					if (event.isComposing) return;
+					if (event.key === 'Enter') {
+						event.preventDefault();
+						event.currentTarget.blur();
+					} else if (event.key === 'Escape') {
+						pageDraft = null;
+						event.currentTarget.blur();
+					}
+				}}
+			/>
+			<span class="indicator" aria-label="Total pages">{scroll.state.totalPages}</span>
+			<button
+				type="button"
+				aria-label="Next page"
+				title="Next page"
+				disabled={scroll.state.currentPage >= scroll.state.totalPages}
+				onclick={() => scroll.provides?.scrollToNextPage(pageScrollBehavior())}
+			>
+				<CaretRightIcon size={20} aria-hidden="true" />
+			</button>
+		</div>
+	{/if}
 {/if}
 
 <style>
@@ -247,6 +301,11 @@
 		background: #ffffff;
 		border: 1px solid #eaeaea;
 		box-shadow: 0 1px 3px #0000000d;
+		transition: opacity 300ms;
+	}
+	.navigation.hidden {
+		opacity: 0;
+		pointer-events: none;
 	}
 	.zoom {
 		background: #f3f4f7;
@@ -305,6 +364,7 @@
 		display: inline-flex;
 		align-items: center;
 		min-height: 44px;
+		padding: 0 0.75rem;
 		color: #1a1a1a;
 		flex-shrink: 0;
 	}

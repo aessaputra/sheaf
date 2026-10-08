@@ -17,6 +17,7 @@ assert.match(page, /<HeadlessViewer streamUrl=\{data.streamUrl\} fileName=\{data
 assert.match(viewer, /<ViewerToolbar \{documentId\} \{streamUrl\} \{fileName\}/);
 assert.match(page, /min-height: 44px/);
 assert.match(page, /a:focus-visible/);
+assert.match(toolbar, /padding: 0 0\.75rem/);
 assert.match(viewer, /outline-offset: -2px/);
 for (const action of ['Next', 'Previous']) {
 	assert.ok(toolbar.includes(`scrollTo${action}Page(pageScrollBehavior())`));
