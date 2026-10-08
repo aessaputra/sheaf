@@ -35,11 +35,10 @@ jobs:
         run: npm run check
       - name: Regression checks
         run: |
-          node scripts/engine-lifecycle.check.mjs
-          node scripts/file-response.check.mjs
-          node scripts/env-validation.check.mjs
-          node scripts/viewer-a11y.check.mjs
-          node scripts/viewer-toolbar.check.mjs
+          set -e
+          for check in scripts/*.check.mjs; do
+            node "$check"
+          done
       - name: Build
         run: npm run build
       # Wrangler includes the Worker entrypoint in declarations after the first build.

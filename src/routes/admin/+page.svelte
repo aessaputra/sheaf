@@ -107,6 +107,7 @@
 	}
 
 	onMount(() => {
+		if (data.oidcError === 'forbidden') toast.error('Account not authorized.');
 		if (authed) void loadFiles();
 	});
 </script>
@@ -125,10 +126,21 @@
 			Enter the password to manage files.
 		</p>
 
+		{#if data.oidcEnabled}
+			<a
+				href="/api/auth/oidc/start"
+				class="mt-10 block w-full max-w-sm rounded-md border border-[#EAEAEA] bg-white px-6 py-3 text-center text-sm font-medium text-[#111111] transition-colors hover:bg-[#F5F5F4] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#787774]"
+			>
+				Sign in with OIDC
+			</a>
+		{/if}
+
 		<form
 			method="POST"
 			onsubmit={handleLogin}
-			class="mt-10 max-w-sm rounded-xl border border-[#EAEAEA] bg-white p-6 sm:p-8"
+			class="{data.oidcEnabled
+				? 'mt-4'
+				: 'mt-10'} max-w-sm rounded-xl border border-[#EAEAEA] bg-white p-6 sm:p-8"
 		>
 			<label for="password" class="block text-sm font-medium text-[#111111]">Password</label>
 			<input

@@ -29,6 +29,7 @@ function check(building, values) {
 }
 
 const oidcEmpty = {
+	OIDC_TOKEN_ENDPOINT_AUTH_METHOD: undefined,
 	OIDC_ISSUER: undefined,
 	OIDC_CLIENT_ID: undefined,
 	OIDC_CLIENT_SECRET: undefined,
@@ -36,7 +37,11 @@ const oidcEmpty = {
 	OIDC_ALLOWED_EMAILS: undefined,
 	OIDC_ALLOWED_SUBS: undefined
 };
-assert.deepEqual(check(true, {}), { ADMIN_PASSWORD: undefined, SESSION_SECRET: undefined, ...oidcEmpty });
+assert.deepEqual(check(true, {}), {
+	ADMIN_PASSWORD: undefined,
+	SESSION_SECRET: undefined,
+	...oidcEmpty
+});
 const valid = { ADMIN_PASSWORD: 'synthetic-admin-password', SESSION_SECRET: 's'.repeat(32) };
 assert.deepEqual(check(false, valid), { ...valid, ...oidcEmpty });
 for (const name of Object.keys(valid)) {
@@ -63,8 +68,19 @@ const oidcValid = {
 };
 assert.deepEqual(check(true, {}).OIDC_ISSUER, undefined);
 assert.deepEqual(check(false, { ...valid, ...oidcValid }).OIDC_ISSUER, 'https://id.aes.my.id');
-// Trailing slash normalizes to canonical form.
+for (const method of ['client_secret_basic', 'client_secret_post'])
+	assert.equal(
+		check(false, { ...valid, OIDC_TOKEN_ENDPOINT_AUTH_METHOD: method })
+			.OIDC_TOKEN_ENDPOINT_AUTH_METHOD,
+		method
+	);
+assert.throws(
+	() => check(false, { ...valid, OIDC_TOKEN_ENDPOINT_AUTH_METHOD: 'invalid' }),
+	/env_invalid/
+);
+// Issuer identity includes a significant path trailing slash.
 assert.equal(
-	check(false, { ...valid, ...oidcValid, OIDC_ISSUER: 'https://id.aes.my.id/' }).OIDC_ISSUER,
-	'https://id.aes.my.id'
+	check(false, { ...valid, ...oidcValid, OIDC_ISSUER: 'https://auth.example.com/tenant/' })
+		.OIDC_ISSUER,
+	'https://auth.example.com/tenant/'
 );

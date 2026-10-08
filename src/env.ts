@@ -23,23 +23,32 @@ export const variables = defineEnvVars({
 	OIDC_ISSUER: {
 		schema: (value): string | undefined => {
 			if (!value?.trim()) return undefined;
-			return value.replace(/\/+$/, '');
+			return value;
 		},
-		description: 'Canonical Pocket ID base URL, e.g. https://id.aes.my.id. Empty disables OIDC.'
+		description: 'Canonical OIDC issuer URL, e.g. https://auth.example.com. Empty disables OIDC.'
 	},
 	OIDC_CLIENT_ID: {
 		schema: (value): string | undefined => {
 			if (!value?.trim()) return undefined;
 			return value as string;
 		},
-		description: 'OAuth client ID registered in Pocket ID. Empty disables OIDC.'
+		description: 'OAuth client ID registered with the OIDC provider. Empty disables OIDC.'
 	},
 	OIDC_CLIENT_SECRET: {
 		schema: (value): string | undefined => {
 			if (!value?.trim()) return undefined;
 			return value as string;
 		},
-		description: 'OAuth client secret from Pocket ID. Empty disables OIDC.'
+		description: 'OAuth client secret from the OIDC provider. Empty disables OIDC.'
+	},
+	OIDC_TOKEN_ENDPOINT_AUTH_METHOD: {
+		schema: (value): 'client_secret_basic' | 'client_secret_post' | undefined => {
+			if (!value?.trim()) return undefined;
+			if (value !== 'client_secret_basic' && value !== 'client_secret_post')
+				throw new Error('Expected client_secret_basic or client_secret_post.');
+			return value;
+		},
+		description: 'Registered token endpoint authentication method. Defaults to client_secret_basic.'
 	},
 	OIDC_REDIRECT_URI: {
 		schema: (value): string | undefined => {
@@ -47,14 +56,15 @@ export const variables = defineEnvVars({
 			return value as string;
 		},
 		description:
-			'Exact callback URL registered in Pocket ID, e.g. https://sheaf.example.workers.dev/api/auth/oidc/callback.'
+			'Exact callback URL registered with the OIDC provider, e.g. https://sheaf.example.workers.dev/api/auth/oidc/callback.'
 	},
 	OIDC_ALLOWED_EMAILS: {
 		schema: (value): string | undefined => {
 			if (!value?.trim()) return undefined;
 			return value as string;
 		},
-		description: 'Comma-separated emails allowed to sign in via OIDC. Empty means no email allowlist.'
+		description:
+			'Comma-separated emails allowed to sign in via OIDC. Empty means no email allowlist.'
 	},
 	OIDC_ALLOWED_SUBS: {
 		schema: (value): string | undefined => {
@@ -62,6 +72,6 @@ export const variables = defineEnvVars({
 			return value as string;
 		},
 		description:
-			'Comma-separated Pocket ID sub values allowed to sign in via OIDC. Empty means no sub allowlist.'
+			'Comma-separated OIDC subject (sub) values allowed to sign in via OIDC. Empty means no sub allowlist.'
 	}
 });

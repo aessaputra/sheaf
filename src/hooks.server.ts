@@ -2,7 +2,12 @@ import type { Handle } from '@sveltejs/kit/hooks';
 import { SESSION_SECRET } from '$app/env/private';
 import { COOKIE_NAME, verifySessionToken } from '#lib/server/session.ts';
 
-const PUBLIC_API = new Set(['/api/login', '/api/logout']);
+const PUBLIC_API = new Set([
+	'/api/login',
+	'/api/logout',
+	'/api/auth/oidc/start',
+	'/api/auth/oidc/callback'
+]);
 
 export const handle: Handle = async ({ event, resolve }) => {
 	const authed = await verifySessionToken(event.cookies.get(COOKIE_NAME), SESSION_SECRET);
