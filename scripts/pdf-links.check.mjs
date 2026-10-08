@@ -14,6 +14,7 @@ assert.match(link, /type="button"/);
 assert.match(link, /popover="auto"/);
 assert.match(link, /Go to link/);
 assert.match(link, /\.link:hover/);
+assert.match(link, /\.link \{\s*display: block;/); // Small PDF hitboxes must not inherit inline baseline offsets.
 assert.match(link, /aria-expanded=\{selected\}/);
 assert.doesNotMatch(link, /aria-label="Open PDF link" onclick=\{navigate\}/);
 assert.match(link, /capability\.provides\?\.forDocument/);
