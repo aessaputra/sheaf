@@ -25,7 +25,17 @@ async function check(unmountFirst, closeFails = false) {
 		destroy: () => destroys++
 	};
 	const context = {
-		loadEngine: () => Promise.resolve({ createPdfiumEngine: () => pending }),
+		loadEngine: () =>
+			Promise.resolve({
+				createPdfiumEngine: (wasmUrl) => {
+					assert.equal(new URL(wasmUrl).origin, 'https://sheaf.test');
+					assert.equal(new URL(wasmUrl).pathname, '/pdfium.wasm');
+					return pending;
+				}
+			}),
+		URL,
+		window: { location: { href: 'https://sheaf.test/v/fixture' } },
+		ScrollStrategy: { Vertical: 'vertical' },
 		onMount: (callback) => (cleanup = callback()),
 		$props: () => ({ streamUrl: '/fixture.pdf' }),
 		$state: (value) => value,

@@ -7,8 +7,8 @@ const toolbar = readFileSync(
 );
 assert.match(toolbar, /href=\{streamUrl\} download=\{fileName\}/);
 assert.ok(toolbar.indexOf('aria-label="Zoom out"') < toolbar.indexOf('>Download</a>'));
-assert.match(toolbar, /\.toolbar \{[^}]*padding: 0\.5rem 1\.5rem;/);
-assert.match(toolbar, /\.toolbar \{[^}]*flex-wrap: wrap;/);
+assert.match(toolbar, /\.toolbar \{[^}]*padding: 0\.5rem 1rem;/);
+assert.match(toolbar, /@container \(max-width: 25rem\)/);
 assert.match(toolbar, /\.toolbar > a \{[^}]*margin-left: auto;/);
 assert.match(toolbar, /position: absolute/);
 assert.match(toolbar, /bottom: 1rem/);
@@ -39,8 +39,8 @@ for (const name of ['Previous page', 'Next page', 'Zoom out', 'Zoom in', 'Fit wi
 	assert.ok(toolbar.includes(`aria-label="${name}"`));
 	assert.ok(toolbar.includes(`title="${name}`));
 }
-assert.match(toolbar, /min-width: 44px/);
-assert.match(toolbar, /min-height: 44px/);
+assert.match(toolbar, /min-width: 2rem/);
+assert.match(toolbar, /min-height: 2rem/);
 assert.match(toolbar, /button:focus-visible/);
 for (const control of ['Prev', 'Next', 'Zoom out', 'Zoom in', 'Fit width']) {
 	assert.ok(toolbar.includes(control), `${control} remains available`);

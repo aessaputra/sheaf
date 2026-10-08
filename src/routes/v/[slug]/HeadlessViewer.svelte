@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { usePdfiumEngine } from '@embedpdf/engines/svelte';
+	import { onMount } from 'svelte';
+	import type { createPdfiumEngine } from '@embedpdf/engines/pdfium-worker-engine';
 	import { EmbedPDF } from '@embedpdf/core/svelte';
 	import { createPluginRegistration } from '@embedpdf/core';
 	import { ViewportPluginPackage, Viewport } from '@embedpdf/plugin-viewport/svelte';
@@ -15,11 +16,38 @@
 
 	let { streamUrl, fileName }: { streamUrl: string; fileName: string } = $props();
 
-	// Self-hosted wasm (static/pdfium.wasm), no external requests.
-	// fontFallback: null keeps rendering fully offline; non-embedded glyphs
-	// render as tofu instead of fetching fonts from a CDN.
-	const pdfEngine = usePdfiumEngine({ wasmUrl: '/pdfium.wasm', fontFallback: null });
+	let engine = $state<ReturnType<typeof createPdfiumEngine>>();
+	let engineFailed = $state(false);
 
+	onMount(() => {
+		let cancelled = false;
+		let ownedEngine: ReturnType<typeof createPdfiumEngine> | undefined;
+		import('@embedpdf/engines/pdfium-worker-engine')
+			.then(async ({ createPdfiumEngine }) => {
+				const initialized = await createPdfiumEngine(
+					// Blob workers cannot resolve root-relative URLs.
+					new URL('/pdfium.wasm', window.location.href).href
+				);
+				// The installed hook publishes late successes after its cleanup has already run.
+				if (cancelled) {
+					initialized.destroy();
+					return;
+				}
+				ownedEngine = initialized;
+				engine = initialized;
+			})
+			.catch(() => {
+				if (!cancelled) engineFailed = true;
+			});
+		return () => {
+			cancelled = true;
+			if (ownedEngine) {
+				const initialized = ownedEngine;
+				const destroy = () => initialized.destroy();
+				initialized.closeAllDocuments().wait(destroy, destroy);
+			}
+		};
+	});
 	const plugins = $derived([
 		createPluginRegistration(DocumentManagerPluginPackage, {
 			initialDocuments: [{ url: streamUrl }]
@@ -32,14 +60,14 @@
 </script>
 
 <div class="pdf">
-	{#if pdfEngine.error}
+	{#if engineFailed}
 		<a class="download" href={streamUrl} download={fileName}>Download</a>
 		<p class="loading" role="alert">Could not load the PDF engine.</p>
-	{:else if pdfEngine.isLoading || !pdfEngine.engine}
+	{:else if !engine}
 		<a class="download" href={streamUrl} download={fileName}>Download</a>
 		<p class="loading" role="status">Loading…</p>
 	{:else}
-		<EmbedPDF engine={pdfEngine.engine} {plugins}>
+		<EmbedPDF {engine} {plugins}>
 			{#snippet children({ activeDocumentId })}
 				{#if activeDocumentId}
 					{@const documentId = activeDocumentId}
