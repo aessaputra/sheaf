@@ -11,6 +11,11 @@ assert.match(viewer, /<PagePointerProvider/);
 assert.match(viewer, /<GlobalPointerProvider/);
 const link = readFileSync(new URL('PdfLink.svelte', root), 'utf8');
 assert.match(link, /type="button"/);
+assert.match(link, /popover="auto"/);
+assert.match(link, /Go to link/);
+assert.match(link, /\.link:hover/);
+assert.match(link, /aria-expanded=\{selected\}/);
+assert.doesNotMatch(link, /aria-label="Open PDF link" onclick=\{navigate\}/);
 assert.match(link, /capability\.provides\?\.forDocument/);
 const source = readFileSync(new URL('PdfLinkNavigation.svelte', root), 'utf8');
 const script = source
