@@ -39,7 +39,7 @@
 	.viewer {
 		display: flex;
 		flex-direction: column;
-		height: 100vh;
+		height: 100dvh;
 		background: #ffffff;
 		color: #1a1a1a;
 	}

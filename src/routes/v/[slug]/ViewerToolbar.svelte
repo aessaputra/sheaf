@@ -277,14 +277,12 @@
 	.toolbar {
 		display: flex;
 		align-items: center;
-		justify-content: space-between;
+		gap: 0.5rem;
 		flex-shrink: 0;
-		flex-wrap: wrap;
-		gap: 0.25rem;
-		padding: 0.5rem 1.5rem;
-		border-bottom: 1px solid #eaeaea;
+		padding: 0.5rem 1rem;
+		border-bottom: 1px solid #e5e7eb;
 		background: #ffffff;
-		font-size: 0.85rem;
+		font-size: 0.875rem;
 	}
 	.toolbar > a {
 		margin-left: auto;
@@ -292,8 +290,9 @@
 	.controls {
 		display: flex;
 		align-items: center;
-		gap: 0.25rem;
-		border-radius: 8px;
+		gap: 0.125rem;
+		border-radius: 6px;
+		min-width: 0;
 	}
 	.navigation {
 		position: absolute;
@@ -303,16 +302,23 @@
 		z-index: 1;
 		padding: 0.25rem;
 		background: #ffffff;
-		border: 1px solid #eaeaea;
-		box-shadow: 0 1px 3px #0000000d;
+		border: 1px solid #e5e7eb;
+		border-radius: 8px;
+		box-shadow:
+			0 10px 15px -3px #0000001a,
+			0 4px 6px -4px #0000001a;
 		transition: opacity 300ms;
+		pointer-events: auto;
+		max-width: calc(100% - 2rem);
 	}
 	.navigation.hidden {
 		opacity: 0;
 		pointer-events: none;
 	}
 	.zoom {
-		background: #f3f4f7;
+		background: #f3f4f6;
+		border-radius: 6px;
+		padding-right: 0.25rem;
 	}
 	.indicator {
 		padding: 0 0.25rem;
@@ -323,29 +329,40 @@
 	.percentage {
 		display: flex;
 		align-items: center;
-		padding-left: 0.5rem;
+		min-width: 0;
 	}
 	input {
-		width: 3rem;
-		min-height: 44px;
+		width: 2.5rem;
+		min-height: 32px;
+		height: 2rem;
 		min-width: 0;
 		font: inherit;
-		color: #1a1a1a;
+		font-size: 0.875rem;
+		color: #111827;
 		background: transparent;
 		border: 0;
+		border-radius: 6px;
 		text-align: right;
 		padding: 0 0.25rem;
+	}
+	input:hover {
+		background: #e5e7eb;
 	}
 	.page-input {
 		width: 2.5rem;
 		min-height: 32px;
 		text-align: center;
-		border: 1px solid #eaeaea;
-		border-radius: 4px;
+		border: 1px solid #e5e7eb;
+		border-radius: 6px;
+		background: #ffffff;
+	}
+	.page-input:hover {
+		background: #ffffff;
 	}
 	input:focus-visible {
-		outline: 2px solid #1a1a1a;
+		outline: 2px solid #3b82f6;
 		outline-offset: -2px;
+		background: #ffffff;
 	}
 	.presets {
 		inset: 4rem auto auto 0.5rem;
@@ -367,39 +384,65 @@
 	a {
 		display: inline-flex;
 		align-items: center;
-		min-height: 44px;
+		min-height: 2rem;
 		padding: 0 0.75rem;
-		color: #1a1a1a;
+		font-size: 0.875rem;
+		color: #111827;
+		border-radius: 6px;
 		flex-shrink: 0;
+		white-space: nowrap;
+	}
+	a:hover {
+		background: #f3f4f6;
 	}
 	a:focus-visible {
-		outline: 2px solid #1a1a1a;
+		outline: 2px solid #3b82f6;
 		outline-offset: 2px;
 	}
 	button {
-		min-width: 44px;
-		min-height: 44px;
+		min-width: 2rem;
+		min-height: 2rem;
+		height: 2rem;
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
 		border: 0;
-		border-radius: 8px;
-		padding: 0.5rem 0.65rem;
+		border-radius: 6px;
+		padding: 5px;
 		font: inherit;
 		white-space: nowrap;
 		background: transparent;
-		color: #1a1a1a;
+		color: #111827;
 		cursor: pointer;
+		flex-shrink: 0;
 	}
 	button:hover:not(:disabled) {
-		background: #f7f7f5;
+		background: #e5e7eb;
 	}
 	button:focus-visible {
-		outline: 2px solid #1a1a1a;
+		outline: 2px solid #3b82f6;
 		outline-offset: 2px;
 	}
 	button:disabled {
 		cursor: default;
-		color: #a3a3a3;
+		color: #9ca3af;
+		opacity: 0.5;
+	}
+	/* Ready-made style responsiveness: collapse by viewer width, not viewport. */
+	@container (max-width: 40rem) {
+		.toolbar {
+			padding: 0.5rem 0.75rem;
+			gap: 0.25rem;
+		}
+	}
+	@container (max-width: 25rem) {
+		/* Tiny viewer: hide the editable percent, keep preset menu + in/out. */
+		.percentage {
+			display: none;
+		}
+		.zoom {
+			background: transparent;
+			padding-right: 0;
+		}
 	}
 </style>

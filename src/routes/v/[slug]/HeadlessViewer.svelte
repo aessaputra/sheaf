@@ -1,10 +1,9 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import type { createPdfiumEngine } from '@embedpdf/engines/pdfium-worker-engine';
+	import { usePdfiumEngine } from '@embedpdf/engines/svelte';
 	import { EmbedPDF } from '@embedpdf/core/svelte';
 	import { createPluginRegistration } from '@embedpdf/core';
 	import { ViewportPluginPackage, Viewport } from '@embedpdf/plugin-viewport/svelte';
-	import { Scroller, ScrollPluginPackage } from '@embedpdf/plugin-scroll/svelte';
+	import { Scroller, ScrollPluginPackage, ScrollStrategy } from '@embedpdf/plugin-scroll/svelte';
 	import type { PageLayout } from '@embedpdf/plugin-scroll';
 	import {
 		DocumentManagerPluginPackage,
@@ -15,57 +14,32 @@
 	import ViewerToolbar from './ViewerToolbar.svelte';
 
 	let { streamUrl, fileName }: { streamUrl: string; fileName: string } = $props();
-	let engine = $state<ReturnType<typeof createPdfiumEngine>>();
-	let engineFailed = $state(false);
 
-	onMount(() => {
-		let cancelled = false;
-		let ownedEngine: ReturnType<typeof createPdfiumEngine> | undefined;
-		import('@embedpdf/engines/pdfium-worker-engine')
-			.then(async ({ createPdfiumEngine }) => {
-				const initialized = await createPdfiumEngine(
-					'https://cdn.jsdelivr.net/npm/@embedpdf/pdfium@2.15.1/dist/pdfium.wasm'
-				);
-				// The installed hook publishes late successes after its cleanup has already run.
-				if (cancelled) {
-					initialized.destroy();
-					return;
-				}
-				ownedEngine = initialized;
-				engine = initialized;
-			})
-			.catch(() => {
-				if (!cancelled) engineFailed = true;
-			});
-		return () => {
-			cancelled = true;
-			if (ownedEngine) {
-				const initialized = ownedEngine;
-				const destroy = () => initialized.destroy();
-				initialized.closeAllDocuments().wait(destroy, destroy);
-			}
-		};
-	});
+	// Self-hosted wasm (static/pdfium.wasm), no external requests.
+	// fontFallback: null keeps rendering fully offline; non-embedded glyphs
+	// render as tofu instead of fetching fonts from a CDN.
+	const pdfEngine = usePdfiumEngine({ wasmUrl: '/pdfium.wasm', fontFallback: null });
+
 	const plugins = $derived([
 		createPluginRegistration(DocumentManagerPluginPackage, {
 			initialDocuments: [{ url: streamUrl }]
 		}),
-		createPluginRegistration(ViewportPluginPackage),
-		createPluginRegistration(ScrollPluginPackage),
+		createPluginRegistration(ViewportPluginPackage, { viewportGap: 10 }),
+		createPluginRegistration(ScrollPluginPackage, { defaultStrategy: ScrollStrategy.Vertical }),
 		createPluginRegistration(RenderPluginPackage),
 		createPluginRegistration(ZoomPluginPackage, { defaultZoomLevel: ZoomMode.FitWidth })
 	]);
 </script>
 
 <div class="pdf">
-	{#if engineFailed}
+	{#if pdfEngine.error}
 		<a class="download" href={streamUrl} download={fileName}>Download</a>
 		<p class="loading" role="alert">Could not load the PDF engine.</p>
-	{:else if !engine}
+	{:else if pdfEngine.isLoading || !pdfEngine.engine}
 		<a class="download" href={streamUrl} download={fileName}>Download</a>
 		<p class="loading" role="status">Loading…</p>
 	{:else}
-		<EmbedPDF {engine} {plugins}>
+		<EmbedPDF engine={pdfEngine.engine} {plugins}>
 			{#snippet children({ activeDocumentId })}
 				{#if activeDocumentId}
 					{@const documentId = activeDocumentId}
@@ -120,10 +94,14 @@
 		flex-direction: column;
 		height: 100%;
 		min-height: 0;
+		container-type: inline-size;
+		background: #ffffff;
 	}
 	.viewport {
 		flex: 1;
 		min-height: 0;
+		position: relative;
+		overscroll-behavior: none;
 	}
 	.viewport :global([aria-label='PDF pages']:focus-visible) {
 		outline: 2px solid #1a1a1a;
