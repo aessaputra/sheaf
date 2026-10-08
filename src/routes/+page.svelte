@@ -1,18 +1,15 @@
-<main class="mx-auto max-w-5xl px-6 py-24">
+<svelte:head>
+	<title>sheaf — Documents, shared simply.</title>
+	<meta name="description" content="A personal collection of PDFs." />
+</svelte:head>
+
+<main class="mx-auto max-w-5xl px-6 py-16 sm:py-24 lg:py-32">
+	<p class="text-2xl text-[#111111]" style="font-family: Georgia, serif;">sheaf</p>
 	<h1
-		class="text-5xl leading-[1.1] tracking-[-0.03em] text-[#111111]"
-		style="font-family: 'Instrument Serif', Georgia, serif;"
+		class="mt-8 max-w-2xl text-4xl leading-[1.1] tracking-[-0.03em] text-[#111111] sm:text-6xl"
+		style="font-family: Georgia, serif;"
 	>
-		sheaf
+		Documents, shared simply.
 	</h1>
-	<p class="mt-6 max-w-xl text-lg leading-[1.6] text-[#2F3437]">Upload a PDF, share the link.</p>
-	<a
-		href="/admin"
-		class="mt-10 inline-block rounded-md bg-[#111111] px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-[#333333] active:scale-98"
-	>
-		Open admin
-	</a>
-	<footer class="mt-24 border-t border-[#EAEAEA] pt-6 text-sm text-[#787774]">
-		Static PDFs, served fast.
-	</footer>
+	<p class="mt-6 max-w-xl text-lg leading-[1.6] text-[#2F3437]">A personal collection of PDFs.</p>
 </main>
