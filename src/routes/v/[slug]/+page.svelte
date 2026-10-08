@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import ViewerFallback from './ViewerFallback.svelte';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
@@ -21,16 +22,16 @@
 <div class="viewer">
 	<main>
 		<h1 class="name">{data.fileName}</h1>
-		{#if importFailed}
-			<a href={data.streamUrl} download={data.fileName}>Download</a>
-			<p class="loading" role="alert">Could not load the PDF viewer.</p>
-		{:else if HeadlessViewer}
+		{#if HeadlessViewer}
 			{#key data.streamUrl}
 				<HeadlessViewer streamUrl={data.streamUrl} fileName={data.fileName} />
 			{/key}
 		{:else}
-			<a href={data.streamUrl} download={data.fileName}>Download</a>
-			<p class="loading" role="status">Loading…</p>
+			<ViewerFallback
+				streamUrl={data.streamUrl}
+				fileName={data.fileName}
+				errorMessage={importFailed ? 'Could not load the PDF viewer.' : undefined}
+			/>
 		{/if}
 	</main>
 </div>
@@ -53,24 +54,9 @@
 		clip-path: inset(50%);
 		white-space: nowrap;
 	}
-	a {
-		display: inline-flex;
-		align-items: center;
-		min-height: 44px;
-		color: #1a1a1a;
-		flex-shrink: 0;
-		margin: 0.5rem;
-	}
-	a:focus-visible {
-		outline: 2px solid #1a1a1a;
-		outline-offset: 2px;
-	}
 	main {
+		position: relative;
 		flex: 1;
 		min-height: 0;
-	}
-	.loading {
-		padding: 2rem;
-		text-align: center;
 	}
 </style>

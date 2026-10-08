@@ -13,6 +13,7 @@
 	import { RenderLayer, RenderPluginPackage } from '@embedpdf/plugin-render/svelte';
 	import { ZoomGestureWrapper, ZoomPluginPackage, ZoomMode } from '@embedpdf/plugin-zoom/svelte';
 	import ViewerToolbar from './ViewerToolbar.svelte';
+	import ViewerFallback from './ViewerFallback.svelte';
 
 	let { streamUrl, fileName }: { streamUrl: string; fileName: string } = $props();
 
@@ -60,12 +61,12 @@
 </script>
 
 <div class="pdf">
-	{#if engineFailed}
-		<a class="download" href={streamUrl} download={fileName}>Download</a>
-		<p class="loading" role="alert">Could not load the PDF engine.</p>
-	{:else if !engine}
-		<a class="download" href={streamUrl} download={fileName}>Download</a>
-		<p class="loading" role="status">Loading…</p>
+	{#if !engine}
+		<ViewerFallback
+			{streamUrl}
+			{fileName}
+			errorMessage={engineFailed ? 'Could not load the PDF engine.' : undefined}
+		/>
 	{:else}
 		<EmbedPDF {engine} {plugins}>
 			{#snippet children({ activeDocumentId })}
@@ -73,10 +74,7 @@
 					{@const documentId = activeDocumentId}
 					<DocumentContent {documentId}>
 						{#snippet children(documentContent)}
-							{#if documentContent.isError}
-								<a class="download" href={streamUrl} download={fileName}>Download</a>
-								<p class="loading" role="alert">Could not open this PDF.</p>
-							{:else if documentContent.isLoaded}
+							{#if documentContent.isLoaded}
 								{#snippet renderPage(page: PageLayout)}
 									<div
 										style:width={`${page.width}px`}
@@ -101,14 +99,16 @@
 									</Viewport>
 								</div>
 							{:else}
-								<a class="download" href={streamUrl} download={fileName}>Download</a>
-								<p class="loading" role="status">Loading…</p>
+								<ViewerFallback
+									{streamUrl}
+									{fileName}
+									errorMessage={documentContent.isError ? 'Could not open this PDF.' : undefined}
+								/>
 							{/if}
 						{/snippet}
 					</DocumentContent>
 				{:else}
-					<a class="download" href={streamUrl} download={fileName}>Download</a>
-					<p class="loading" role="status">Loading…</p>
+					<ViewerFallback {streamUrl} {fileName} />
 				{/if}
 			{/snippet}
 		</EmbedPDF>
@@ -134,21 +134,5 @@
 	.viewport :global([aria-label='PDF pages']:focus-visible) {
 		outline: 2px solid #1a1a1a;
 		outline-offset: -2px;
-	}
-	.download {
-		display: inline-flex;
-		align-items: center;
-		align-self: flex-end;
-		min-height: 44px;
-		margin: 0.5rem;
-		color: #1a1a1a;
-	}
-	.download:focus-visible {
-		outline: 2px solid #1a1a1a;
-		outline-offset: 2px;
-	}
-	.loading {
-		padding: 2rem;
-		text-align: center;
 	}
 </style>
