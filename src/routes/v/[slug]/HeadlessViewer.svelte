@@ -12,6 +12,7 @@
 	} from '@embedpdf/plugin-document-manager/svelte';
 	import { RenderLayer, RenderPluginPackage } from '@embedpdf/plugin-render/svelte';
 	import { ZoomGestureWrapper, ZoomPluginPackage, ZoomMode } from '@embedpdf/plugin-zoom/svelte';
+	import { PanPluginPackage } from '@embedpdf/plugin-pan/svelte';
 	import {
 		AnnotationPluginPackage,
 		AnnotationLayer,
@@ -85,7 +86,8 @@
 			locked: { type: LockModeType.All },
 			autoOpenLinks: false
 		}),
-		createPluginRegistration(ZoomPluginPackage, { defaultZoomLevel: ZoomMode.FitPage })
+		createPluginRegistration(ZoomPluginPackage, { defaultZoomLevel: ZoomMode.FitPage }),
+		createPluginRegistration(PanPluginPackage)
 	]);
 </script>
 
