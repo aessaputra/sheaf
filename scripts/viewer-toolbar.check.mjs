@@ -5,23 +5,24 @@ const toolbar = readFileSync(
 	new URL('../src/routes/v/[slug]/ViewerToolbar.svelte', import.meta.url),
 	'utf8'
 );
-assert.match(toolbar, /href=\{streamUrl\} download=\{fileName\}/);
-assert.ok(toolbar.indexOf('aria-label="Zoom out"') < toolbar.indexOf('>Download</a>'));
-assert.match(toolbar, /\.toolbar \{[^}]*padding: 0\.5rem 1rem;/);
-assert.match(toolbar, /@container \(max-width: 25rem\)/);
-assert.match(toolbar, /\.toolbar > a \{[^}]*margin-left: auto;/);
-assert.match(toolbar, /position: absolute/);
-assert.match(toolbar, /bottom: 1rem/);
-assert.match(toolbar, /left: 50%/);
-assert.match(toolbar, /translateX\(-50%\)/);
+assert.ok(toolbar.includes('href={streamUrl}'));
+assert.ok(toolbar.includes('download={fileName}'));
+assert.ok(toolbar.indexOf('aria-label="Zoom out"') < toolbar.indexOf('>Download</a'));
+assert.ok(toolbar.includes('px-4 py-2'));
+assert.doesNotMatch(toolbar, /<style>/);
+assert.ok(toolbar.includes('@max-'));
+assert.ok(toolbar.includes('ml-auto'));
+assert.ok(toolbar.includes('absolute bottom-4'));
+assert.ok(toolbar.includes('bottom-4'));
+assert.ok(toolbar.includes('left-1/2'));
+assert.ok(toolbar.includes('-translate-x-1/2'));
 assert.equal((toolbar.match(/<input\b/g) ?? []).length, 2);
 assert.match(toolbar, /aria-label="Current page"/);
 assert.match(toolbar, /aria-label="Set zoom"/);
-assert.match(toolbar, /popover="auto"/);
-assert.match(toolbar, /anchor-name: --zoom-presets/);
-assert.match(toolbar, /position-anchor: --zoom-presets/);
-assert.match(toolbar, /top: anchor\(bottom\)/);
-assert.match(toolbar, /left: anchor\(left\)/);
+assert.ok(toolbar.includes('aria-label="Zoom presets"'));
+assert.ok(!toolbar.includes('position-anchor'));
+assert.ok(!toolbar.includes('popovertarget'));
+assert.ok(toolbar.includes('isPresetOpen'));
 assert.doesNotMatch(toolbar, /<form\b|>Go</);
 assert.doesNotMatch(toolbar, /Page \{|of \{scroll\.state\.totalPages\}/);
 assert.ok((toolbar.match(/<button\b/g) ?? []).length >= 5);
@@ -37,15 +38,16 @@ for (const icon of [
 // Kaizen 2 (RED): floating nav hidden entirely when totalPages <= 1.
 assert.match(toolbar, /scroll\.state\.totalPages > 1/);
 assert.doesNotMatch(toolbar, /⌄/);
-// Kaizen 3 (RED): Download link has comfortable horizontal padding; buttons keep theirs.
-assert.match(toolbar, /a \{[\s\S]*?padding: 0 0\.75rem/);
+// Kaizen 3 (GREEN): Download link has comfortable horizontal padding; buttons keep theirs.
+assert.ok(toolbar.includes('px-3'));
+assert.ok(toolbar.includes('p-[5px]'));
 for (const name of ['Previous page', 'Next page', 'Zoom out', 'Zoom in', 'Fit width']) {
 	assert.ok(toolbar.includes(`aria-label="${name}"`));
 	assert.ok(toolbar.includes(`title="${name}`));
 }
-assert.match(toolbar, /min-width: 2rem/);
-assert.match(toolbar, /min-height: 2rem/);
-assert.match(toolbar, /button:focus-visible/);
+assert.ok(toolbar.includes('min-w-8'));
+assert.ok(toolbar.includes('min-h-8'));
+assert.ok(toolbar.includes('focus-visible:'));
 for (const control of ['Prev', 'Next', 'Zoom out', 'Zoom in', 'Fit width']) {
 	assert.ok(toolbar.includes(control), `${control} remains available`);
 }
@@ -195,7 +197,7 @@ assert.match(toolbar, /onmouseenter/);
 assert.match(toolbar, /onmouseleave/);
 assert.match(toolbar, /onfocusin/);
 assert.match(toolbar, /onfocusout/);
-assert.match(toolbar, /transition: opacity/);
+assert.ok(toolbar.includes('transition-opacity'));
 console.log(
-	'Viewer toolbar: editable page/zoom, native presets, accessible controls, input guards and page boundaries PASS.'
+	'Viewer toolbar: editable page/zoom, custom presets, accessible controls, input guards and page boundaries PASS.'
 );
