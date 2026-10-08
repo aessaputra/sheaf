@@ -30,7 +30,8 @@ for (const icon of [
 	'CaretRightIcon',
 	'MinusCircleIcon',
 	'PlusCircleIcon',
-	'CaretDownIcon'
+	'CaretDownIcon',
+	'HandPalmIcon'
 ]) {
 	assert.ok(toolbar.includes(`<${icon} size={20} aria-hidden="true"`));
 }
@@ -43,10 +44,12 @@ for (const name of ['Previous page', 'Next page', 'Zoom out', 'Zoom in', 'Fit wi
 	assert.ok(toolbar.includes(`aria-label="${name}"`));
 	assert.ok(toolbar.includes(`title="${name}`));
 }
+assert.ok(toolbar.includes('aria-label="Toggle pan"'));
+assert.ok(toolbar.includes('title="Pan (hand)"'));
 assert.match(toolbar, /min-width: 2rem/);
 assert.match(toolbar, /min-height: 2rem/);
 assert.match(toolbar, /button:focus-visible/);
-for (const control of ['Prev', 'Next', 'Zoom out', 'Zoom in', 'Fit width']) {
+for (const control of ['Prev', 'Next', 'Zoom out', 'Zoom in', 'Fit width', 'Toggle pan']) {
 	assert.ok(toolbar.includes(control), `${control} remains available`);
 }
 for (const action of [
@@ -54,7 +57,8 @@ for (const action of [
 	'scrollToNextPage(pageScrollBehavior())',
 	'zoomOut()',
 	'zoomIn()',
-	'chooseZoom(ZoomMode.FitWidth)'
+	'chooseZoom(ZoomMode.FitWidth)',
+	'togglePan()'
 ]) {
 	assert.ok(toolbar.includes(action), `${action} remains connected`);
 }
