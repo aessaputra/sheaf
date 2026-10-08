@@ -6,7 +6,7 @@ const toolbar = read('ViewerToolbar');
 const viewer = read('HeadlessViewer');
 const page = read('+page');
 assert.ok(viewer.includes('bg-gray-100'));
-assert.match(toolbar, /color: #595959/);
+assert.ok(toolbar.includes('text-gray-600'));
 assert.match(toolbar, /aria-label="Set zoom"/);
 assert.match(toolbar, /aria-label="Current page"/);
 assert.match(toolbar, /aria-label="Total pages"/);
@@ -14,7 +14,7 @@ assert.ok(page.includes('sr-only'));
 assert.doesNotMatch(page, /<header>/);
 assert.match(page, /<HeadlessViewer streamUrl=\{data.streamUrl\} fileName=\{data.fileName\}/);
 assert.match(viewer, /<ViewerToolbar \{documentId\} \{streamUrl\} \{fileName\}/);
-assert.match(toolbar, /padding: 0 0\.75rem/);
+assert.ok(toolbar.includes('px-3'));
 assert.ok(viewer.includes('-outline-offset-2'));
 for (const action of ['Next', 'Previous']) {
 	assert.ok(toolbar.includes(`scrollTo${action}Page(pageScrollBehavior())`));
