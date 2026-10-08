@@ -137,13 +137,13 @@
 									</GlobalPointerProvider>
 								</div>
 							{:else}
-							<div class="fallback">
-								<p role={documentContent.isError ? 'alert' : 'status'}>
-									{documentContent.isError ? 'Could not open this PDF.' : 'Loading…'}
-								</p>
-								<a href={streamUrl} download={fileName}>Download</a>
-							</div>
-						{/if}
+								<div class="fallback">
+									<p role={documentContent.isError ? 'alert' : 'status'}>
+										{documentContent.isError ? 'Could not open this PDF.' : 'Loading…'}
+									</p>
+									<a href={streamUrl} download={fileName}>Download</a>
+								</div>
+							{/if}
 						{/snippet}
 					</DocumentContent>
 				{:else}
