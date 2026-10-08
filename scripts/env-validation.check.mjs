@@ -28,9 +28,17 @@ function check(building, values) {
 	return result;
 }
 
-assert.deepEqual(check(true, {}), { ADMIN_PASSWORD: undefined, SESSION_SECRET: undefined });
+const oidcEmpty = {
+	OIDC_ISSUER: undefined,
+	OIDC_CLIENT_ID: undefined,
+	OIDC_CLIENT_SECRET: undefined,
+	OIDC_REDIRECT_URI: undefined,
+	OIDC_ALLOWED_EMAILS: undefined,
+	OIDC_ALLOWED_SUBS: undefined
+};
+assert.deepEqual(check(true, {}), { ADMIN_PASSWORD: undefined, SESSION_SECRET: undefined, ...oidcEmpty });
 const valid = { ADMIN_PASSWORD: 'synthetic-admin-password', SESSION_SECRET: 's'.repeat(32) };
-assert.deepEqual(check(false, valid), valid);
+assert.deepEqual(check(false, valid), { ...valid, ...oidcEmpty });
 for (const name of Object.keys(valid)) {
 	for (const value of [
 		undefined,
@@ -43,4 +51,20 @@ for (const name of Object.keys(valid)) {
 }
 console.log(
 	'PASS: build accepts absent secrets; runtime rejects missing/invalid secrets and accepts valid values.'
+);
+
+const oidcValid = {
+	OIDC_ISSUER: 'https://id.aes.my.id',
+	OIDC_CLIENT_ID: 'sheaf',
+	OIDC_CLIENT_SECRET: 'x'.repeat(32),
+	OIDC_REDIRECT_URI: 'https://sheaf.example.workers.dev/api/auth/oidc/callback',
+	OIDC_ALLOWED_EMAILS: 'admin@example.id',
+	OIDC_ALLOWED_SUBS: ''
+};
+assert.deepEqual(check(true, {}).OIDC_ISSUER, undefined);
+assert.deepEqual(check(false, { ...valid, ...oidcValid }).OIDC_ISSUER, 'https://id.aes.my.id');
+// Trailing slash normalizes to canonical form.
+assert.equal(
+	check(false, { ...valid, ...oidcValid, OIDC_ISSUER: 'https://id.aes.my.id/' }).OIDC_ISSUER,
+	'https://id.aes.my.id'
 );
