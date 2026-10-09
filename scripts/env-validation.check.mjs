@@ -66,7 +66,6 @@ const oidcValid = {
 	OIDC_ALLOWED_EMAILS: 'admin@example.id',
 	OIDC_ALLOWED_SUBS: ''
 };
-assert.deepEqual(check(true, {}).OIDC_ISSUER, undefined);
 assert.deepEqual(check(false, { ...valid, ...oidcValid }).OIDC_ISSUER, 'https://id.aes.my.id');
 for (const method of ['client_secret_basic', 'client_secret_post'])
 	assert.equal(

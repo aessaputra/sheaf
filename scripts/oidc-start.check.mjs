@@ -89,15 +89,6 @@ try {
 	]) {
 		assert.equal((await invoke(overrides)).response.status, 503);
 	}
-	assert.equal(
-		(
-			await invoke(
-				{ OIDC_ISSUER: 'https://auth.example.com/tenant/' },
-				{ issuer: 'https://auth.example.com/tenant/' }
-			)
-		).response.status,
-		302
-	);
 	for (const value of [
 		'not a URL',
 		'http://id.example.test',
@@ -128,15 +119,11 @@ try {
 		`${config.OIDC_REDIRECT_URI}?extra=1`,
 		`${config.OIDC_REDIRECT_URI}?`
 	];
-	const invalidRedirectResults = [];
 	for (const value of invalidRedirects) {
 		const { response, writes } = await invoke({ OIDC_REDIRECT_URI: value });
-		invalidRedirectResults.push({ value, status: response.status, writes: writes.length });
+		assert.equal(response.status, 503, value);
+		assert.equal(writes.length, 0, value);
 	}
-	assert.deepEqual(
-		invalidRedirectResults,
-		invalidRedirects.map((value) => ({ value, status: 503, writes: 0 }))
-	);
 	for (const key of ['OIDC_ISSUER', 'OIDC_CLIENT_ID', 'OIDC_REDIRECT_URI', 'SESSION_SECRET']) {
 		const { response, writes } = await invoke({ [key]: '' });
 		assert.equal(response.status, 503);

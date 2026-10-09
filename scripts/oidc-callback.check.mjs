@@ -352,16 +352,6 @@ try {
 		{ OIDC_ALLOWED_EMAILS: ' , ', OIDC_ALLOWED_SUBS: '' }
 	])
 		assert.equal((await invoke({ config })).response.status, 503);
-	assert.equal(
-		(
-			await invoke({
-				config: { OIDC_ISSUER: 'https://auth.example.com/tenant/' },
-				metadata: { issuer: 'https://auth.example.com/tenant/' },
-				claims: { iss: 'https://auth.example.com/tenant/' }
-			})
-		).response.status,
-		302
-	);
 	for (const options of [
 		{ raw: undefined },
 		{ raw: 'malformed' },

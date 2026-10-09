@@ -58,12 +58,9 @@ const publicPaths = [
 	'/admin',
 	'/admin/settings'
 ];
-const publicResults = [];
-for (const path of publicPaths) publicResults.push({ path, ...(await invoke(path)) });
-assert.deepEqual(
-	publicResults,
-	publicPaths.map((path) => ({ path, status: 200, resolved: true, session: null }))
-);
+for (const path of publicPaths) {
+	assert.deepEqual(await invoke(path), { status: 200, resolved: true, session: null }, path);
+}
 for (const path of [
 	'/api/files',
 	'/api/files/slug',
