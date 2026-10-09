@@ -3,7 +3,7 @@ export function parseAllowlist(value: string | undefined): string[] {
 	const seen = new Set<string>();
 	for (const part of value.split(',')) {
 		const v = part.trim().toLowerCase();
-		if (v && !seen.has(v)) seen.add(v);
+		if (v) seen.add(v);
 	}
 	return [...seen];
 }
