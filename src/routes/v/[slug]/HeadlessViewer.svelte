@@ -28,6 +28,7 @@
 	import { PdfAnnotationSubtype, type PdfAnnotationObject } from '@embedpdf/models';
 	import PdfLink from './PdfLink.svelte';
 	import PdfLinkNavigation from './PdfLinkNavigation.svelte';
+	import PdfSelection from './PdfSelection.svelte';
 	import PanActivator from './PanActivator.svelte';
 	import ViewerFallback from './ViewerFallback.svelte';
 	import ViewerToolbar from './ViewerToolbar.svelte';
@@ -60,6 +61,7 @@
 		createPluginRegistration(SelectionPluginPackage),
 		createPluginRegistration(AnnotationPluginPackage, {
 			locked: { type: LockModeType.All },
+			autoCommit: false,
 			autoOpenLinks: false
 		}),
 		createPluginRegistration(ZoomPluginPackage, { defaultZoomLevel: ZoomMode.FitPage }),
@@ -99,6 +101,7 @@
 											pageIndex={page.pageIndex}
 											annotationRenderers={linkRenderers}
 										/>
+										<PdfSelection {documentId} pageIndex={page.pageIndex} />
 									</PagePointerProvider>
 								{/snippet}
 								<PdfLinkNavigation />

@@ -14,7 +14,7 @@ function visit(node) {
 		const children = node.fragment.nodes.filter((child) => child.type === 'Component');
 		assert.deepEqual(
 			children.map((child) => child.name),
-			['RenderLayer', 'TilingLayer', 'AnnotationLayer']
+			['RenderLayer', 'TilingLayer', 'AnnotationLayer', 'PdfSelection']
 		);
 		layers.push(...children);
 	}
@@ -24,7 +24,7 @@ function visit(node) {
 	}
 }
 visit(ast.fragment);
-assert.equal(layers.length, 3);
+assert.equal(layers.length, 4);
 // Base layer keeps scale 1 but caps DPR at 1: full-coordinate preview,
 // memory no longer multiplied by devicePixelRatio squared. Tiles keep
 // device DPR internally so zoomed detail stays sharp.
