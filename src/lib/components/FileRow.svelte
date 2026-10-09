@@ -1,14 +1,8 @@
 <script lang="ts">
 	import { TrashIcon } from 'phosphor-svelte';
+	import type { FileEntry } from '#lib/server/admin-files.ts';
 	import CopyLinkButton from './CopyLinkButton.svelte';
 	import OpenLinkButton from './OpenLinkButton.svelte';
-
-	export interface FileEntry {
-		slug: string;
-		fileName: string;
-		sizeBytes: number;
-		createdAt: number;
-	}
 
 	let {
 		file,
@@ -20,18 +14,19 @@
 
 	let deleting = $state(false);
 
-	function formatSize(bytes: number): string {
-		if (bytes < 1024) return `${bytes} B`;
-		if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-		return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-	}
-
-	function formatDate(ts: number): string {
-		return new Date(ts).toLocaleDateString('en-US', {
+	function formatMeta(bytes: number, ts: number): string {
+		const size =
+			bytes < 1024
+				? `${bytes} B`
+				: bytes < 1024 * 1024
+					? `${(bytes / 1024).toFixed(1)} KB`
+					: `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+		const date = new Date(ts).toLocaleDateString('en-US', {
 			month: 'short',
 			day: 'numeric',
 			year: 'numeric'
 		});
+		return `${size} · ${date}`;
 	}
 
 	async function handleDelete() {
@@ -48,7 +43,7 @@
 	<div class="min-w-0 flex-1">
 		<p class="truncate text-sm font-medium text-[#111111]">{file.fileName}</p>
 		<p class="mt-0.5 font-mono text-xs text-[#787774]">
-			{formatSize(file.sizeBytes)} · {formatDate(file.createdAt)}
+			{formatMeta(file.sizeBytes, file.createdAt)}
 		</p>
 	</div>
 	<CopyLinkButton slug={file.slug} />

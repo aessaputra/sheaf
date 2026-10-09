@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onDestroy } from 'svelte';
 	import { CopyIcon, CheckIcon } from 'phosphor-svelte';
 	import { toast } from 'svelte-sonner';
 
@@ -6,6 +7,11 @@
 
 	let copied = $state(false);
 	const link = $derived(`/v/${slug}`);
+	let timer: ReturnType<typeof setTimeout> | null = null;
+
+	onDestroy(() => {
+		if (timer) clearTimeout(timer);
+	});
 
 	async function copy() {
 		const href = new URL(link, location.origin).href;
@@ -16,7 +22,8 @@
 			return;
 		}
 		copied = true;
-		setTimeout(() => (copied = false), 1500);
+		if (timer) clearTimeout(timer);
+		timer = setTimeout(() => (copied = false), 1500);
 	}
 </script>
 

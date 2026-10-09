@@ -5,7 +5,8 @@
 	import { SignOutIcon } from 'phosphor-svelte';
 	import { goto } from '$app/navigation';
 	import UploadCard from '#lib/components/UploadCard.svelte';
-	import FileRow, { type FileEntry } from '#lib/components/FileRow.svelte';
+	import FileRow from '#lib/components/FileRow.svelte';
+	import type { FileEntry } from '#lib/server/admin-files.ts';
 
 	let { data }: PageProps = $props();
 
