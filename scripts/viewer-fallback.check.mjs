@@ -37,5 +37,5 @@ for (const [message, failed] of [
 		assert.match(body, /download="fixture.pdf"/);
 	}
 }
-assert.equal((source.match(/\{@render fallback\(/g) ?? []).length, 3);
+assert.equal((source.match(/\{@render fallback\(/g) ?? []).length, 4);
 console.log('PASS: shared viewer fallback preserves loading/error roles and download target.');

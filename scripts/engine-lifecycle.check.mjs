@@ -1,83 +1,31 @@
-// Run: node scripts/engine-lifecycle.check.mjs
+// Integration contract only: engine cleanup is now owned by the upstream hook.
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import vm from 'node:vm';
+import { parse, compile } from 'svelte/compiler';
 import ts from 'typescript';
 
-const component = readFileSync(
+const source = readFileSync(
 	new URL('../src/routes/v/[slug]/HeadlessViewer.svelte', import.meta.url),
 	'utf8'
 );
-assert.match(component, /defaultZoomLevel: ZoomMode\.FitPage/);
-const script = component.match(/<script lang="ts">([\s\S]*?)<\/script>/)[1];
-async function check(unmountFirst, closeFails = false) {
-	let resolve;
-	const pending = new Promise((done) => (resolve = done));
-	let cleanup;
-	let destroys = 0;
-	let closes = 0;
-	const engine = {
-		closeAllDocuments: () => ({
-			wait: (success, failure) => {
-				closes++;
-				(closeFails ? failure : success)();
-			}
-		}),
-		destroy: () => destroys++
-	};
-	const context = {
-		loadEngine: () =>
-			Promise.resolve({
-				createPdfiumEngine: (wasmUrl) => {
-					assert.equal(new URL(wasmUrl).origin, 'https://sheaf.test');
-					assert.equal(new URL(wasmUrl).pathname, '/pdfium.wasm');
-					return pending;
-				}
-			}),
-		URL,
-		window: { location: { href: 'https://sheaf.test/v/fixture' } },
-		ScrollStrategy: { Vertical: 'vertical' },
-		onMount: (callback) => (cleanup = callback()),
-		$props: () => ({ streamUrl: '/fixture.pdf' }),
-		$state: (value) => value,
-		$derived: (value) => value,
-		createPluginRegistration: () => ({}),
-		DocumentManagerPluginPackage: {},
-		ViewportPluginPackage: {},
-		ScrollPluginPackage: {},
-		RenderPluginPackage: {},
-		TilingPluginPackage: {},
-		ZoomPluginPackage: {},
-		PanPluginPackage: {},
-		InteractionManagerPluginPackage: {},
-		SelectionPluginPackage: {},
-		AnnotationPluginPackage: {},
-		LockModeType: { All: 'all' },
-		PdfAnnotationSubtype: { LINK: 2 },
-		PdfLink: {},
-		ZoomMode: { FitWidth: 'fit-width' }
-	};
-	vm.createContext(context);
-	// Execute the actual component lifecycle, substituting only the asynchronous factory boundary.
-	const code = script
-		.replace(/^\s*import\s+[\s\S]*?;$/gm, '')
-		.replace(/import\('@embedpdf\/engines\/pdfium-worker-engine'\)/g, 'loadEngine()');
-	vm.runInContext(
-		ts.transpile(code, { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext }),
-		context
-	);
-	await Promise.resolve(); // Factory has started but its successful result is still pending.
-	if (unmountFirst) cleanup();
-	resolve(engine);
-	await new Promise((done) => setImmediate(done));
-	if (!unmountFirst) cleanup();
-	assert.equal(destroys, 1, 'successful engine must be destroyed exactly once across unmount');
-	assert.equal(closes, unmountFirst ? 0 : 1, 'only a published engine can have open documents');
-}
-
-await check(true);
-await check(false);
-await check(false, true);
+const ast = parse(source, { modern: true });
+const script = ts.createSourceFile(
+	'viewer.ts',
+	source.slice(ast.instance.content.start, ast.instance.content.end),
+	ts.ScriptTarget.Latest,
+	true
+);
+const declaration = script.statements
+	.filter(ts.isVariableStatement)
+	.flatMap((node) => [...node.declarationList.declarations])
+	.find((node) => node.name.getText(script) === 'pdfEngine');
+assert.equal(declaration.initializer.expression.getText(script), 'usePdfiumEngine');
+assert.equal(declaration.initializer.arguments.length, 0, 'Use the version-matched default CDN');
+assert.match(source, /from '@embedpdf\/engines\/svelte'/);
+assert.doesNotMatch(source, /onMount|createPdfiumEngine|closeAllDocuments|\.destroy\(/);
+assert.ok(source.indexOf('{#if pdfEngine.error}') < source.indexOf('pdfEngine.isLoading'));
+assert.match(source, /<EmbedPDF engine=\{pdfEngine.engine\}/);
+compile(source, { generate: 'client' });
 console.log(
-	'PASS: late success destroyed; mounted success closed/destroyed; close failure still destroys.'
+	'PASS: official engine hook, default CDN WASM, error-first state and client compilation. Cleanup delegated to EmbedPDF.'
 );
