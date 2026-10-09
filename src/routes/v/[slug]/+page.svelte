@@ -29,7 +29,7 @@
 			{/key}
 		{:else}
 			<ViewerFallback
-				message={importFailed ? 'Could not load the PDF viewer.' : 'Loading viewer…'}
+				message={importFailed ? 'Could not load the PDF viewer.' : 'Loading…'}
 				failed={importFailed}
 				streamUrl={data.streamUrl}
 				fileName={data.fileName}

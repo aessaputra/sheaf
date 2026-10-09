@@ -30,7 +30,7 @@ const { default: Component } = await import(
 	`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`
 );
 for (const [message, failed] of [
-	['Loading viewer…', false],
+	['Loading…', false],
 	['Could not load the PDF engine.', true],
 	['Could not open this PDF.', true]
 ]) {

@@ -71,7 +71,7 @@
 	{#if pdfEngine.error}
 		<ViewerFallback message="Could not load the PDF engine." failed={true} {streamUrl} {fileName} />
 	{:else if pdfEngine.isLoading || !pdfEngine.engine}
-		<ViewerFallback message="Loading PDF engine…" failed={false} {streamUrl} {fileName} />
+		<ViewerFallback message="Loading…" failed={false} {streamUrl} {fileName} />
 	{:else}
 		<EmbedPDF engine={pdfEngine.engine} {plugins}>
 			{#snippet children({ activeDocumentId })}
@@ -121,9 +121,7 @@
 								</div>
 							{:else}
 								<ViewerFallback
-									message={documentContent.isError
-										? 'Could not open this PDF.'
-										: 'Loading document…'}
+									message={documentContent.isError ? 'Could not open this PDF.' : 'Loading…'}
 									failed={documentContent.isError}
 									{streamUrl}
 									{fileName}
@@ -132,7 +130,7 @@
 						{/snippet}
 					</DocumentContent>
 				{:else}
-					<ViewerFallback message="Loading viewer…" failed={false} {streamUrl} {fileName} />
+					<ViewerFallback message="Loading…" failed={false} {streamUrl} {fileName} />
 				{/if}
 			{/snippet}
 		</EmbedPDF>
