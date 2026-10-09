@@ -28,6 +28,7 @@
 	import { PdfAnnotationSubtype, type PdfAnnotationObject } from '@embedpdf/models';
 	import PdfLink from './PdfLink.svelte';
 	import PdfLinkNavigation from './PdfLinkNavigation.svelte';
+	import PanActivator from './PanActivator.svelte';
 	import ViewerToolbar from './ViewerToolbar.svelte';
 
 	const linkRenderers = [
@@ -114,6 +115,7 @@
 									</PagePointerProvider>
 								{/snippet}
 								<PdfLinkNavigation />
+								<PanActivator {documentId} />
 								<ViewerToolbar {documentId} {streamUrl} {fileName} />
 								<div class="relative min-h-0 flex-1 overscroll-none">
 									<GlobalPointerProvider {documentId}>
