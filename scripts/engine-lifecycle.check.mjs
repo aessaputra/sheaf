@@ -46,6 +46,7 @@ async function check(unmountFirst, closeFails = false) {
 		ViewportPluginPackage: {},
 		ScrollPluginPackage: {},
 		RenderPluginPackage: {},
+		TilingPluginPackage: {},
 		ZoomPluginPackage: {},
 		PanPluginPackage: {},
 		InteractionManagerPluginPackage: {},

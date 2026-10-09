@@ -5,6 +5,13 @@ const source = readFileSync(
 	new URL('../src/routes/v/[slug]/HeadlessViewer.svelte', import.meta.url),
 	'utf8'
 );
+assert.match(
+	source,
+	/createPluginRegistration\(PanPluginPackage\)/,
+	'Use the reference Pan registration and its touch-only default'
+);
+const { PanPluginPackage } = await import('@embedpdf/plugin-pan');
+assert.equal(PanPluginPackage.manifest.defaultConfig.defaultMode, 'mobile');
 const registrations = [...source.matchAll(/createPluginRegistration\((\w+PluginPackage)/g)].map(
 	(match) => match[1]
 );

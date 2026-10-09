@@ -11,6 +11,7 @@
 		DocumentContent
 	} from '@embedpdf/plugin-document-manager/svelte';
 	import { RenderLayer, RenderPluginPackage } from '@embedpdf/plugin-render/svelte';
+	import { TilingLayer, TilingPluginPackage } from '@embedpdf/plugin-tiling/svelte';
 	import { ZoomGestureWrapper, ZoomPluginPackage, ZoomMode } from '@embedpdf/plugin-zoom/svelte';
 	import { PanPluginPackage } from '@embedpdf/plugin-pan/svelte';
 	import { SelectionPluginPackage } from '@embedpdf/plugin-selection/svelte';
@@ -80,6 +81,11 @@
 		createPluginRegistration(ViewportPluginPackage, { viewportGap: 10 }),
 		createPluginRegistration(ScrollPluginPackage, { defaultStrategy: ScrollStrategy.Vertical }),
 		createPluginRegistration(RenderPluginPackage),
+		createPluginRegistration(TilingPluginPackage, {
+			tileSize: 768,
+			overlapPx: 2.5,
+			extraRings: 0
+		}),
 		createPluginRegistration(InteractionManagerPluginPackage),
 		createPluginRegistration(SelectionPluginPackage),
 		createPluginRegistration(AnnotationPluginPackage, {
@@ -87,7 +93,7 @@
 			autoOpenLinks: false
 		}),
 		createPluginRegistration(ZoomPluginPackage, { defaultZoomLevel: ZoomMode.FitPage }),
-		createPluginRegistration(PanPluginPackage, { defaultMode: 'always' })
+		createPluginRegistration(PanPluginPackage)
 	]);
 </script>
 
@@ -120,6 +126,11 @@
 											{documentId}
 											pageIndex={page.pageIndex}
 											scale={1}
+											style="pointer-events: none"
+										/>
+										<TilingLayer
+											{documentId}
+											pageIndex={page.pageIndex}
 											style="pointer-events: none"
 										/>
 										<AnnotationLayer
