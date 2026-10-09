@@ -29,6 +29,7 @@
 	import PdfLink from './PdfLink.svelte';
 	import PdfLinkNavigation from './PdfLinkNavigation.svelte';
 	import PanActivator from './PanActivator.svelte';
+	import ViewerFallback from './ViewerFallback.svelte';
 	import ViewerToolbar from './ViewerToolbar.svelte';
 
 	const linkRenderers = [
@@ -66,25 +67,11 @@
 	]);
 </script>
 
-{#snippet fallback(message: string, failed: boolean)}
-	<div class="flex flex-col items-center gap-4 p-8 text-center">
-		<p role={failed ? 'alert' : 'status'}>{message}</p>
-		{#if failed}
-			<a
-				href={streamUrl}
-				download={fileName}
-				class="inline-flex min-h-8 items-center rounded-md px-3 text-sm text-gray-900 hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-blue-500"
-				>Download</a
-			>
-		{/if}
-	</div>
-{/snippet}
-
 <div class="@container relative flex h-full min-h-0 flex-col bg-white">
 	{#if pdfEngine.error}
-		{@render fallback('Could not load the PDF engine.', true)}
+		<ViewerFallback message="Could not load the PDF engine." failed={true} {streamUrl} {fileName} />
 	{:else if pdfEngine.isLoading || !pdfEngine.engine}
-		{@render fallback('Loading…', false)}
+		<ViewerFallback message="Loading PDF engine…" failed={false} {streamUrl} {fileName} />
 	{:else}
 		<EmbedPDF engine={pdfEngine.engine} {plugins}>
 			{#snippet children({ activeDocumentId })}
@@ -133,15 +120,19 @@
 									</GlobalPointerProvider>
 								</div>
 							{:else}
-								{@render fallback(
-									documentContent.isError ? 'Could not open this PDF.' : 'Loading…',
-									documentContent.isError
-								)}
+								<ViewerFallback
+									message={documentContent.isError
+										? 'Could not open this PDF.'
+										: 'Loading document…'}
+									failed={documentContent.isError}
+									{streamUrl}
+									{fileName}
+								/>
 							{/if}
 						{/snippet}
 					</DocumentContent>
 				{:else}
-					{@render fallback('Loading…', false)}
+					<ViewerFallback message="Loading viewer…" failed={false} {streamUrl} {fileName} />
 				{/if}
 			{/snippet}
 		</EmbedPDF>

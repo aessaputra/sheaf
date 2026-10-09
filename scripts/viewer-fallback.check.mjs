@@ -3,22 +3,34 @@ import { readFile } from 'node:fs/promises';
 import { compile } from 'svelte/compiler';
 import { render } from 'svelte/server';
 
-const source = await readFile(
-	new URL('../src/routes/v/[slug]/HeadlessViewer.svelte', import.meta.url),
-	'utf8'
+const root = new URL('../', import.meta.url);
+const fallback = await readFile(new URL('src/routes/v/[slug]/ViewerFallback.svelte', root), 'utf8');
+const viewer = await readFile(new URL('src/routes/v/[slug]/HeadlessViewer.svelte', root), 'utf8');
+const route = await readFile(new URL('src/routes/v/[slug]/+page.svelte', root), 'utf8');
+
+// Both files share one fallback component, no local duplicates.
+for (const [name, source] of [
+	['HeadlessViewer', viewer],
+	['route', route]
+]) {
+	assert.match(source, /ViewerFallback/, `${name} uses the shared fallback`);
+	assert.doesNotMatch(source, /\{#snippet fallback/, `${name} has no local fallback snippet`);
+}
+assert.match(fallback, /<SpinnerGapIcon[^/]*class="[^"]*animate-spin/);
+
+// Stub the icon: the harness cannot import .svelte files in Node.
+const withoutImport = fallback.replace(/import[^;]+;/, '');
+const stubbed = withoutImport.replace(
+	/<SpinnerGapIcon[^/]*\/>/,
+	'<svg class="animate-spin" aria-hidden="true"></svg>'
 );
-const snippet = source.match(/\{#snippet fallback\([^]*?\{\/snippet\}/)?.[0];
-assert.ok(snippet, 'viewer loading/error states must share one fallback');
-const { js } = compile(
-	`<script lang="ts">let { message, failed, streamUrl, fileName } = $props();</script>${snippet}{@render fallback(message, failed)}`,
-	{ generate: 'server' }
-);
+const { js } = compile(stubbed, { generate: 'server' });
 const code = js.code.replace(/from '([^']+)'/g, (_, name) => `from '${import.meta.resolve(name)}'`);
 const { default: Component } = await import(
 	`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`
 );
 for (const [message, failed] of [
-	['Loading…', false],
+	['Loading viewer…', false],
 	['Could not load the PDF engine.', true],
 	['Could not open this PDF.', true]
 ]) {
@@ -32,10 +44,14 @@ for (const [message, failed] of [
 		failed,
 		'Download is an error fallback, not a loading action'
 	);
+	assert.equal(
+		body.includes('animate-spin'),
+		!failed,
+		'spinner shows while loading, not on failure'
+	);
 	if (failed) {
 		assert.match(body, /href="\/v\/fixture\/file"/);
 		assert.match(body, /download="fixture.pdf"/);
 	}
 }
-assert.equal((source.match(/\{@render fallback\(/g) ?? []).length, 4);
 console.log('PASS: shared viewer fallback preserves loading/error roles and download target.');
