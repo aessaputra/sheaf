@@ -25,8 +25,17 @@ function visit(node) {
 }
 visit(ast.fragment);
 assert.equal(layers.length, 3);
-const scale = layers[0].attributes.find((attribute) => attribute.name === 'scale');
+// Base layer keeps scale 1 but caps DPR at 1: full-coordinate preview,
+// memory no longer multiplied by devicePixelRatio squared. Tiles keep
+// device DPR internally so zoomed detail stays sharp.
+const base = layers[0];
+const scale = base.attributes.find((attribute) => attribute.name === 'scale');
 assert.equal(scale?.value.expression.value, 1, 'Reference base raster uses scale 1');
+const dpr = base.attributes.find((attribute) => attribute.name === 'dpr');
+assert.ok(dpr, 'Base RenderLayer must cap dpr');
+assert.equal(dpr.value.expression.value, 1, 'Base dpr cap is 1');
+// Tiling layer untouched: no dpr prop so it keeps window.devicePixelRatio.
+assert.ok(!layers[1].attributes.some((attribute) => attribute.name === 'dpr'));
 assert.ok(!layers[1].attributes.some((attribute) => attribute.name === 'scale'));
 assert.match(
 	source,

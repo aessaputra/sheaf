@@ -98,6 +98,7 @@
 											{documentId}
 											pageIndex={page.pageIndex}
 											scale={1}
+											dpr={1}
 											style="pointer-events: none"
 										/>
 										<TilingLayer
