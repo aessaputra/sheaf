@@ -5,6 +5,8 @@ import { compile } from 'svelte/compiler';
 
 const root = new URL('../', import.meta.url);
 const helperUrl = moduleUrl(await readFile(new URL('src/lib/server/oidc.ts', root), 'utf8'));
+const listFixture = [{ slug: 'fixture1', fileName: 'f.pdf', sizeBytes: 1, createdAt: 1 }];
+const listUrl = `data:text/javascript,export async function listFiles(){return ${JSON.stringify(listFixture)};}`;
 const server = await readFile(new URL('src/routes/admin/+page.server.ts', root), 'utf8');
 const config = {
 	OIDC_ISSUER: 'https://pocket.example.test',
@@ -36,15 +38,26 @@ for (const [name, overrides, enabled] of cases) {
 	const env = { ...config, ...overrides };
 	const source = server
 		.replace("import { dev } from '$app/env';", 'const dev = false;')
+		.replace("import { env as cfEnv } from 'cloudflare:workers';", 'const cfEnv = {};')
 		.replace("import * as env from '$app/env/private';", `const env = ${JSON.stringify(env)};`)
-		.replace("from '#lib/server/oidc.ts'", `from '${helperUrl}'`);
+		.replace("from '#lib/server/oidc.ts'", `from '${helperUrl}'`)
+		.replace("from '#lib/server/admin-files.ts'", `from '${listUrl}'`);
 	const { load } = await import(moduleUrl(source));
 	for (const session of [null, { authed: true }]) {
 		for (const error of [null, 'forbidden']) {
 			const url = new URL('https://sheaf.example.test/admin');
 			if (error) url.searchParams.set('error', error);
-			const result = await load({ locals: { session }, url });
-			assert.deepEqual(result, { authed: !!session, oidcEnabled: enabled, oidcError: error }, name);
+			const result = await load({ locals: { session }, url, platform: null });
+			assert.deepEqual(
+				result,
+				{
+					authed: !!session,
+					initialFiles: session ? listFixture : [],
+					oidcEnabled: enabled,
+					oidcError: error
+				},
+				name
+			);
 			for (const value of Object.values(env).filter(Boolean)) {
 				assert.ok(!JSON.stringify(result).includes(value), `${name}: leaked configuration`);
 			}
@@ -62,8 +75,10 @@ assert.match(
 );
 assert.match(
 	component,
-	/onMount\(\(\) => \{\s*if \(data\.oidcError === 'forbidden'\) toast\.error\('Account not authorized\.'\);\s*if \(authed\) void loadFiles\(\);/
+	/onMount\(\(\) => \{\s*if \(data\.oidcError === 'forbidden'\) toast\.error\('Account not authorized\.'\);\s*\}\);/
 );
+assert.doesNotMatch(component, /if \(authed\) void loadFiles\(\);/);
+assert.match(component, /data\.initialFiles/);
 assert.doesNotMatch(component, /Pocket\s*ID/i);
 assert.match(component, /onsubmit=\{handleLogin\}/);
 assert.match(component, /onclick=\{logout\}/);

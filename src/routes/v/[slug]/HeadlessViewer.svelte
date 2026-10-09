@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { usePdfiumEngine } from '@embedpdf/engines/svelte';
+	import { usePdfiumEngine } from './pdf-engine.svelte';
 	import { EmbedPDF } from '@embedpdf/core/svelte';
 	import { createPluginRegistration } from '@embedpdf/core';
 	import { ViewportPluginPackage, Viewport } from '@embedpdf/plugin-viewport/svelte';

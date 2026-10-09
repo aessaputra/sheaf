@@ -15,9 +15,9 @@
 
 	// svelte-ignore state_referenced_locally (initial auth snapshot; updated explicitly on login/logout/401)
 	let authed = $state(data.authed);
-	let files = $state<FileEntry[]>([]);
-	// svelte-ignore state_referenced_locally (initial auth snapshot; loading is reset explicitly in loadFiles)
-	let loading = $state(data.authed);
+	// svelte-ignore state_referenced_locally (SSR initial list snapshot; refreshed explicitly via loadFiles)
+	let files = $state<FileEntry[]>(data.initialFiles ?? []);
+	let loading = $state(false);
 	let loadError = $state<string | null>(null);
 	let loggingOut = $state(false);
 	let loadGeneration = 0;
@@ -138,7 +138,6 @@
 
 	onMount(() => {
 		if (data.oidcError === 'forbidden') toast.error('Account not authorized.');
-		if (authed) void loadFiles();
 	});
 </script>
 

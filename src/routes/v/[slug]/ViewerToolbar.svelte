@@ -186,7 +186,7 @@
 					aria-label="Zoom presets"
 					aria-expanded={isPresetOpen}
 					title="Zoom presets"
-					class="inline-flex h-8 min-h-8 min-w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-[5px] text-gray-900 hover:bg-gray-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+					class="inline-flex h-8 min-h-8 min-w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-1.25 text-gray-900 hover:bg-gray-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
 					popovertarget={presetId}
 				>
 					<CaretDownIcon size={20} aria-hidden="true" />
@@ -208,7 +208,7 @@
 							type="button"
 							aria-label={label}
 							title={label}
-							class="flex h-8 min-h-8 w-full min-w-8 shrink-0 cursor-pointer items-center justify-start rounded-md border-0 bg-transparent p-[5px] text-gray-900 hover:bg-gray-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+							class="flex h-8 min-h-8 w-full min-w-8 shrink-0 cursor-pointer items-center justify-start rounded-md border-0 bg-transparent p-1.25 text-gray-900 hover:bg-gray-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
 							onclick={() => chooseZoom(value)}>{label}</button
 						>
 					{/each}
@@ -218,7 +218,7 @@
 					aria-label="Zoom out"
 					title="Zoom out (Ctrl+-)"
 					aria-keyshortcuts="Control+-"
-					class="inline-flex h-8 min-h-8 min-w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-[5px] text-gray-900 hover:bg-gray-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 disabled:cursor-default disabled:text-gray-400 disabled:opacity-50"
+					class="inline-flex h-8 min-h-8 min-w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-1.25 text-gray-900 hover:bg-gray-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 disabled:cursor-default disabled:text-gray-400 disabled:opacity-50"
 					onclick={() => zoom.provides?.zoomOut()}
 				>
 					<MinusCircleIcon size={20} aria-hidden="true" />
@@ -229,7 +229,7 @@
 					aria-label="Zoom in"
 					title="Zoom in (Ctrl++ or Ctrl+=)"
 					aria-keyshortcuts="Control++ Control+="
-					class="inline-flex h-8 min-h-8 min-w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-[5px] text-gray-900 hover:bg-gray-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 disabled:cursor-default disabled:text-gray-400 disabled:opacity-50"
+					class="inline-flex h-8 min-h-8 min-w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-1.25 text-gray-900 hover:bg-gray-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 disabled:cursor-default disabled:text-gray-400 disabled:opacity-50"
 					onclick={() => zoom.provides?.zoomIn()}
 				>
 					<PlusCircleIcon size={20} aria-hidden="true" />
@@ -247,7 +247,7 @@
 		<div
 			role="group"
 			aria-label="Page navigation"
-			class="absolute bottom-4 left-1/2 z-[1] flex max-w-[calc(100%-2rem)] -translate-x-1/2 items-center gap-0.5 rounded-lg border border-gray-200 bg-white p-1 shadow-lg transition-opacity duration-300 {navVisible
+			class="absolute bottom-4 left-1/2 z-1 flex max-w-[calc(100%-2rem)] -translate-x-1/2 items-center gap-0.5 rounded-lg border border-gray-200 bg-white p-1 shadow-lg transition-opacity duration-300 {navVisible
 				? ''
 				: 'pointer-events-none opacity-0'}"
 			onmouseenter={() => {
@@ -268,7 +268,7 @@
 				type="button"
 				aria-label="Previous page"
 				title="Previous page"
-				class="inline-flex h-8 min-h-8 min-w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-[5px] text-gray-900 hover:bg-gray-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 disabled:cursor-default disabled:text-gray-400 disabled:opacity-50"
+				class="inline-flex h-8 min-h-8 min-w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-1.25 text-gray-900 hover:bg-gray-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 disabled:cursor-default disabled:text-gray-400 disabled:opacity-50"
 				disabled={scroll.state.currentPage <= 1}
 				onclick={() => scroll.provides?.scrollToPreviousPage(pageScrollBehavior())}
 			>
@@ -303,7 +303,7 @@
 				type="button"
 				aria-label="Next page"
 				title="Next page"
-				class="inline-flex h-8 min-h-8 min-w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-[5px] text-gray-900 hover:bg-gray-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 disabled:cursor-default disabled:text-gray-400 disabled:opacity-50"
+				class="inline-flex h-8 min-h-8 min-w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-1.25 text-gray-900 hover:bg-gray-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 disabled:cursor-default disabled:text-gray-400 disabled:opacity-50"
 				disabled={scroll.state.currentPage >= scroll.state.totalPages}
 				onclick={() => scroll.provides?.scrollToNextPage(pageScrollBehavior())}
 			>

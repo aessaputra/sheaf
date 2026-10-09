@@ -1,8 +1,8 @@
 import { error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { env } from 'cloudflare:workers';
-import { desc } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/d1';
+import { listFiles } from '#lib/server/admin-files.ts';
 import { pdfFiles } from '#lib/server/db/schema.ts';
 
 const SLUG_LEN = 8;
@@ -24,17 +24,7 @@ function makeSlug(): string {
 export const GET: RequestHandler = async ({ locals }) => {
 	if (!locals.session) throw error(401, 'Unauthorized');
 
-	const db = drizzle(env.DB);
-
-	const rows = await db
-		.select({
-			slug: pdfFiles.slug,
-			fileName: pdfFiles.fileName,
-			sizeBytes: pdfFiles.sizeBytes,
-			createdAt: pdfFiles.createdAt
-		})
-		.from(pdfFiles)
-		.orderBy(desc(pdfFiles.createdAt));
+	const rows = await listFiles(env.DB);
 
 	return Response.json({ files: rows });
 };
