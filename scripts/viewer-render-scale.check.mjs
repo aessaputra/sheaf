@@ -14,7 +14,7 @@ function visit(node) {
 		const children = node.fragment.nodes.filter((child) => child.type === 'Component');
 		assert.deepEqual(
 			children.map((child) => child.name),
-			['RenderLayer', 'TilingLayer', 'AnnotationLayer', 'PdfSelection']
+			['RenderLayer', 'SafeTilingLayer', 'AnnotationLayer', 'PdfSelection']
 		);
 		layers.push(...children);
 	}

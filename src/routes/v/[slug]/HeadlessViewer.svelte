@@ -10,7 +10,8 @@
 		DocumentContent
 	} from '@embedpdf/plugin-document-manager/svelte';
 	import { RenderLayer, RenderPluginPackage } from '@embedpdf/plugin-render/svelte';
-	import { TilingLayer, TilingPluginPackage } from '@embedpdf/plugin-tiling/svelte';
+	import { TilingPluginPackage } from '@embedpdf/plugin-tiling/svelte';
+	import SafeTilingLayer from './SafeTilingLayer.svelte';
 	import { ZoomGestureWrapper, ZoomPluginPackage, ZoomMode } from '@embedpdf/plugin-zoom/svelte';
 	import { PanPluginPackage } from '@embedpdf/plugin-pan/svelte';
 	import { SelectionPluginPackage } from '@embedpdf/plugin-selection/svelte';
@@ -69,7 +70,7 @@
 	]);
 </script>
 
-<div class="@container relative flex h-full min-h-0 flex-col bg-white">
+<div class="@container relative flex h-full min-h-0 flex-col bg-white select-none">
 	{#if pdfEngine.error}
 		<ViewerFallback message="Could not load the PDF engine." failed={true} {streamUrl} {fileName} />
 	{:else if pdfEngine.isLoading || !pdfEngine.engine}
@@ -91,7 +92,7 @@
 											dpr={1}
 											style="pointer-events: none"
 										/>
-										<TilingLayer
+										<SafeTilingLayer
 											{documentId}
 											pageIndex={page.pageIndex}
 											style="pointer-events: none"
