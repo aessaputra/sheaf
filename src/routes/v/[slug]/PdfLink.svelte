@@ -53,10 +53,14 @@
 	bind:this={menu}
 	popover="auto"
 	class="pointer-events-auto fixed inset-auto m-0 w-max overflow-auto rounded-md border border-gray-200 bg-white p-1 shadow-[0_4px_16px_rgb(0_0_0/12%)]"
-	ontoggle={(event) => {
-		selected = event.newState === 'open';
-		if (selected) positionPopover(event.currentTarget, trigger);
+	onbeforetoggle={(event) => {
+		if (event.newState !== 'open') return;
+		const menu = event.currentTarget;
+		requestAnimationFrame(() => {
+			if (menu.matches(':popover-open')) positionPopover(menu, trigger);
+		});
 	}}
+	ontoggle={(event) => (selected = event.newState === 'open')}
 >
 	<button
 		type="button"

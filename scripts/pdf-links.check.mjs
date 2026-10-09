@@ -100,10 +100,14 @@ scrollCleanup();
 assert.deepEqual(removals, listeners);
 // The native toggle event must activate the selected-only listener state.
 let toggleExpression;
+let beforeToggleExpression;
 function visitLink(node) {
 	if (!node || typeof node !== 'object') return;
 	if (node.type === 'RegularElement' && node.name === 'div') {
 		toggleExpression = node.attributes.find((attr) => attr.name === 'ontoggle')?.value.expression;
+		beforeToggleExpression = node.attributes.find((attr) => attr.name === 'onbeforetoggle')?.value
+			.expression;
+		assert.ok(beforeToggleExpression);
 	}
 	for (const value of Object.values(node)) {
 		if (Array.isArray(value)) value.forEach(visitLink);
@@ -122,7 +126,25 @@ return (event) => { toggle(event); return selected; };`)
 )(trigger, (...args) => positions.push(args));
 assert.equal(toggle({ newState: 'open', currentTarget: menu }), true);
 assert.equal(toggle({ newState: 'closed', currentTarget: menu }), false);
+assert.deepEqual(positions, []);
+const frames = [];
+menu.matches = () => true;
+const beforeToggle = new Function(
+	'trigger',
+	'positionPopover',
+	'requestAnimationFrame',
+	ts.transpile(`return ${link.slice(beforeToggleExpression.start, beforeToggleExpression.end)};`)
+)(
+	trigger,
+	(...args) => positions.push(args),
+	(callback) => frames.push(callback)
+);
+beforeToggle({ newState: 'open', currentTarget: menu });
+assert.deepEqual(positions, [], 'Positioning waits until the menu has measurable dimensions');
+frames.shift()();
 assert.deepEqual(positions, [[menu, trigger]]);
+beforeToggle({ newState: 'closed', currentTarget: menu });
+assert.equal(frames.length, 0);
 const source = readFileSync(new URL('PdfLinkNavigation.svelte', root), 'utf8');
 const script = source
 	.match(/<script lang="ts">([\s\S]*?)<\/script>/)[1]

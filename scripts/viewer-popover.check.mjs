@@ -45,5 +45,14 @@ for (const viewport of [
 		}
 	}
 }
+// Position on the first animation frame, not the deferred toggle event.
+for (const name of ['ViewerToolbar', 'PdfLink']) {
+	const source = readFileSync(
+		new URL(`../src/routes/v/[slug]/${name}.svelte`, import.meta.url),
+		'utf8'
+	);
+	assert.match(source, /onbeforetoggle=/, `${name} prepares positioning before opening`);
+	assert.match(source, /requestAnimationFrame\(/, `${name} positions before the first paint`);
+}
 delete globalThis.window;
 console.log('PASS: measured popovers fit narrow/short/offset viewports and both anchor edges.');

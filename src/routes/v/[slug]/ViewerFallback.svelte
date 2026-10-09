@@ -14,7 +14,7 @@
 	} = $props();
 </script>
 
-<div class="flex flex-col items-center gap-4 p-8 text-center">
+<div class="flex h-full min-h-0 flex-col items-center justify-center gap-4 p-8 text-center">
 	{#if !failed}
 		<SpinnerGapIcon size={28} class="animate-spin text-gray-900" aria-hidden="true" />
 	{/if}

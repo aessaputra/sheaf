@@ -203,10 +203,15 @@
 					id={presetId}
 					bind:this={presetMenu}
 					popover="auto"
-					ontoggle={(event) => {
-						isPresetOpen = event.newState === 'open';
-						if (isPresetOpen && presetButton) positionPopover(event.currentTarget, presetButton);
+					onbeforetoggle={(event) => {
+						if (event.newState !== 'open') return;
+						const menu = event.currentTarget;
+						requestAnimationFrame(() => {
+							if (menu.matches(':popover-open') && presetButton)
+								positionPopover(menu, presetButton);
+						});
 					}}
+					ontoggle={(event) => (isPresetOpen = event.newState === 'open')}
 					role="group"
 					aria-label="Zoom presets"
 					class="fixed inset-auto m-0 w-max min-w-40 overflow-auto rounded-lg border border-gray-200 bg-white p-1 shadow-lg"
