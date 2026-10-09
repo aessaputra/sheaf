@@ -22,6 +22,7 @@
 			return;
 		}
 		copied = true;
+		toast.success('Link copied.');
 		if (timer) clearTimeout(timer);
 		timer = setTimeout(() => (copied = false), 1500);
 	}
@@ -35,7 +36,8 @@
 >
 	{#if copied}
 		<CheckIcon size={14} />
-		<span>Copied</span>
+		<span class="sr-only">Copied</span>
+		<span aria-hidden="true">{link}</span>
 	{:else}
 		<CopyIcon size={14} />
 		<span>{link}</span>
