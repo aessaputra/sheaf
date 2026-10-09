@@ -16,8 +16,6 @@ export const handle: Handle = async ({ event, resolve }) => {
 	const path = event.url.pathname;
 	if (event.locals.session) return resolve(event);
 
-	const isAdmin = path === '/admin' || path.startsWith('/admin/');
-	if (isAdmin) return resolve(event); // /admin serves its own login card when logged out.
 	if (path.startsWith('/api/') && !PUBLIC_API.has(path)) {
 		return new Response('Unauthorized', { status: 401 });
 	}

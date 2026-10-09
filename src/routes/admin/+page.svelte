@@ -1,21 +1,15 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import type { PageProps } from './$types';
-	import { superForm } from 'sveltekit-superforms';
-	import { zod4Client as zodClient } from 'sveltekit-superforms/adapters';
 	import { toast, Toaster } from 'svelte-sonner';
 	import { SignOutIcon } from 'phosphor-svelte';
 	import { goto } from '$app/navigation';
-	import { loginSchema } from '#lib/login-schema.ts';
 	import UploadCard from '#lib/components/UploadCard.svelte';
 	import FileRow, { type FileEntry } from '#lib/components/FileRow.svelte';
 
 	let { data }: PageProps = $props();
 
-	// svelte-ignore state_referenced_locally (login form takes an initial snapshot; validation is local via validateForm)
-	const { form, errors, validateForm } = superForm(data.form, {
-		validators: zodClient(loginSchema)
-	});
+	let password = $state('');
 
 	let loggingIn = $state(false);
 
@@ -54,21 +48,20 @@
 
 	async function handleLogin(event: SubmitEvent) {
 		event.preventDefault();
-		const { valid } = await validateForm();
-		if (!valid) return;
+		if (!password) return;
 		loggingIn = true;
 		try {
 			const res = await fetch('/api/login', {
 				method: 'POST',
 				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({ password: $form.password })
+				body: JSON.stringify({ password })
 			});
 			if (!res.ok) {
 				toast.error('Invalid credentials.');
 				return;
 			}
 			authed = true;
-			$form.password = '';
+			password = '';
 			await loadFiles();
 		} catch {
 			toast.error('Network error. Please try again.');
@@ -102,7 +95,7 @@
 	async function logout() {
 		await fetch('/api/logout', { method: 'POST' });
 		goToLogin();
-		$form.password = '';
+		password = '';
 		goto('/');
 	}
 
@@ -137,12 +130,10 @@
 				name="password"
 				type="password"
 				autocomplete="current-password"
-				bind:value={$form.password}
+				required
+				bind:value={password}
 				class="mt-2 w-full rounded-md border border-[#EAEAEA] bg-[#FBFBFA] px-3 py-2.5 text-sm text-[#111111] outline-none focus:border-[#787774]"
 			/>
-			{#if $errors.password}
-				<p class="mt-2 text-sm text-[#9F2F2D]">{$errors.password}</p>
-			{/if}
 			<button
 				type="submit"
 				disabled={loggingIn}

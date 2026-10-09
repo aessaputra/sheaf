@@ -124,6 +124,9 @@ node scripts/oidc-start.check.mjs
 node scripts/oidc-callback.check.mjs
 node scripts/auth-hooks.check.mjs
 node scripts/admin-oidc.check.mjs
+node scripts/password-login.check.mjs
+node scripts/viewer-fallback.check.mjs
+node scripts/viewer-dependencies.check.mjs
 node scripts/pdf-links.check.mjs
 node scripts/viewer-a11y.check.mjs
 node scripts/viewer-toolbar.check.mjs

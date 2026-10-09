@@ -39,15 +39,6 @@ for (const [name, overrides, enabled] of cases) {
 	const source = server
 		.replace("import { dev } from '$app/env';", 'const dev = false;')
 		.replace("import * as env from '$app/env/private';", `const env = ${JSON.stringify(env)};`)
-		.replace(
-			"import { superValidate } from 'sveltekit-superforms';",
-			'const superValidate = async () => ({ mocked: true });'
-		)
-		.replace(
-			"import { zod4 as zod } from 'sveltekit-superforms/adapters';",
-			'const zod = (schema) => schema;'
-		)
-		.replace("import { loginSchema } from '#lib/login-schema.ts';", 'const loginSchema = {};')
 		.replace("from '#lib/server/oidc.ts'", `from '${helperUrl}'`);
 	const { load } = await import(moduleUrl(source));
 	for (const session of [null, { authed: true }]) {
@@ -55,11 +46,7 @@ for (const [name, overrides, enabled] of cases) {
 			const url = new URL('https://sheaf.example.test/admin');
 			if (error) url.searchParams.set('error', error);
 			const result = await load({ locals: { session }, url });
-			assert.deepEqual(
-				result,
-				{ form: { mocked: true }, authed: !!session, oidcEnabled: enabled, oidcError: error },
-				name
-			);
+			assert.deepEqual(result, { authed: !!session, oidcEnabled: enabled, oidcError: error }, name);
 			for (const value of Object.values(env).filter(Boolean)) {
 				assert.ok(!JSON.stringify(result).includes(value), `${name}: leaked configuration`);
 			}

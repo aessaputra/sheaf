@@ -43,7 +43,6 @@
 		"wrangler": "^4.97.0"
 	},
 	"imports": {
-		"#lib": "./src/lib/index.js",
 		"#lib/*": "./src/lib/*"
 	},
 	"overrides": {
@@ -64,8 +63,6 @@
 		"@embedpdf/plugin-zoom": "2.15.1",
 		"oauth4webapi": "^3.8.8",
 		"phosphor-svelte": "^3.1.0",
-		"svelte-sonner": "^1.2.1",
-		"sveltekit-superforms": "^3.0.0",
-		"zod": "^4.6.5"
+		"svelte-sonner": "^1.2.1"
 	}
 }

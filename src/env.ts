@@ -21,24 +21,15 @@ export const variables = defineEnvVars({
 			'Secret used to sign the admin session cookie. 32+ random characters in production.'
 	},
 	OIDC_ISSUER: {
-		schema: (value): string | undefined => {
-			if (!value?.trim()) return undefined;
-			return value;
-		},
+		schema: (value): string | undefined => (value?.trim() ? value : undefined),
 		description: 'Canonical OIDC issuer URL, e.g. https://auth.example.com. Empty disables OIDC.'
 	},
 	OIDC_CLIENT_ID: {
-		schema: (value): string | undefined => {
-			if (!value?.trim()) return undefined;
-			return value as string;
-		},
+		schema: (value): string | undefined => (value?.trim() ? value : undefined),
 		description: 'OAuth client ID registered with the OIDC provider. Empty disables OIDC.'
 	},
 	OIDC_CLIENT_SECRET: {
-		schema: (value): string | undefined => {
-			if (!value?.trim()) return undefined;
-			return value as string;
-		},
+		schema: (value): string | undefined => (value?.trim() ? value : undefined),
 		description: 'OAuth client secret from the OIDC provider. Empty disables OIDC.'
 	},
 	OIDC_TOKEN_ENDPOINT_AUTH_METHOD: {
@@ -51,26 +42,17 @@ export const variables = defineEnvVars({
 		description: 'Registered token endpoint authentication method. Defaults to client_secret_basic.'
 	},
 	OIDC_REDIRECT_URI: {
-		schema: (value): string | undefined => {
-			if (!value?.trim()) return undefined;
-			return value as string;
-		},
+		schema: (value): string | undefined => (value?.trim() ? value : undefined),
 		description:
 			'Exact callback URL registered with the OIDC provider, e.g. https://sheaf.example.workers.dev/api/auth/oidc/callback.'
 	},
 	OIDC_ALLOWED_EMAILS: {
-		schema: (value): string | undefined => {
-			if (!value?.trim()) return undefined;
-			return value as string;
-		},
+		schema: (value): string | undefined => (value?.trim() ? value : undefined),
 		description:
 			'Comma-separated emails allowed to sign in via OIDC. Empty means no email allowlist.'
 	},
 	OIDC_ALLOWED_SUBS: {
-		schema: (value): string | undefined => {
-			if (!value?.trim()) return undefined;
-			return value as string;
-		},
+		schema: (value): string | undefined => (value?.trim() ? value : undefined),
 		description:
 			'Comma-separated OIDC subject (sub) values allowed to sign in via OIDC. Empty means no sub allowlist.'
 	}

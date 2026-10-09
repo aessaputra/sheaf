@@ -91,19 +91,21 @@
 	]);
 </script>
 
+{#snippet fallback(message: string, failed: boolean)}
+	<div class="flex flex-col items-center gap-4 p-8 text-center">
+		<p role={failed ? 'alert' : 'status'}>{message}</p>
+		<a
+			href={streamUrl}
+			download={fileName}
+			class="inline-flex min-h-8 items-center rounded-md px-3 text-sm text-gray-900 hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-blue-500"
+			>Download</a
+		>
+	</div>
+{/snippet}
+
 <div class="@container relative flex h-full min-h-0 flex-col bg-white">
 	{#if !engine}
-		<div class="flex flex-col items-center gap-4 p-8 text-center">
-			<p role={engineFailed ? 'alert' : 'status'}>
-				{engineFailed ? 'Could not load the PDF engine.' : 'Loading…'}
-			</p>
-			<a
-				href={streamUrl}
-				download={fileName}
-				class="inline-flex min-h-8 items-center rounded-md px-3 text-sm text-gray-900 hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-blue-500"
-				>Download</a
-			>
-		</div>
+		{@render fallback(engineFailed ? 'Could not load the PDF engine.' : 'Loading…', engineFailed)}
 	{:else}
 		<EmbedPDF {engine} {plugins}>
 			{#snippet children({ activeDocumentId })}
@@ -145,30 +147,15 @@
 									</GlobalPointerProvider>
 								</div>
 							{:else}
-								<div class="flex flex-col items-center gap-4 p-8 text-center">
-									<p role={documentContent.isError ? 'alert' : 'status'}>
-										{documentContent.isError ? 'Could not open this PDF.' : 'Loading…'}
-									</p>
-									<a
-										href={streamUrl}
-										download={fileName}
-										class="inline-flex min-h-8 items-center rounded-md px-3 text-sm text-gray-900 hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-blue-500"
-										>Download</a
-									>
-								</div>
+								{@render fallback(
+									documentContent.isError ? 'Could not open this PDF.' : 'Loading…',
+									documentContent.isError
+								)}
 							{/if}
 						{/snippet}
 					</DocumentContent>
 				{:else}
-					<div class="flex flex-col items-center gap-4 p-8 text-center">
-						<p role="status">Loading…</p>
-						<a
-							href={streamUrl}
-							download={fileName}
-							class="inline-flex min-h-8 items-center rounded-md px-3 text-sm text-gray-900 hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-blue-500"
-							>Download</a
-						>
-					</div>
+					{@render fallback('Loading…', false)}
 				{/if}
 			{/snippet}
 		</EmbedPDF>
