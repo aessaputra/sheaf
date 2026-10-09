@@ -22,16 +22,56 @@ function functionSource(name) {
 	return declaration.getText(script);
 }
 // Check the actual event expressions so Enter and blur cannot diverge.
+const buttons = [];
 const inputs = [];
 function visit(node) {
 	if (!node || typeof node !== 'object') return;
 	if (node.type === 'RegularElement' && node.name === 'input') inputs.push(node);
+	if (node.type === 'RegularElement' && node.name === 'button') buttons.push(node);
 	for (const value of Object.values(node)) {
 		if (Array.isArray(value)) value.forEach(visit);
 		else if (value && typeof value === 'object') visit(value);
 	}
 }
 visit(ast.fragment);
+for (const [label, icon, expected] of [
+	['Pan mode', 'HandIcon', ['clear', 'pan']],
+	['Pointer mode', 'CursorIcon', ['pointer']]
+]) {
+	const button = buttons.find((node) =>
+		node.attributes.some((attr) => attr.name === 'aria-label' && attr.value?.[0]?.data === label)
+	);
+	assert.ok(button, `${label} control exists`);
+	assert.ok(button.fragment.nodes.some((node) => node.type === 'Component' && node.name === icon));
+	assert.ok(
+		!button.fragment.nodes.some((node) => node.type === 'RegularElement' && node.name === 'span'),
+		'Mode controls are icon-only'
+	);
+	const event = button.attributes.find((attr) => attr.name === 'onclick').value.expression;
+	const calls = [];
+	const click = new Function(
+		'pan',
+		'selection',
+		'documentId',
+		'pointer',
+		`return (${toolbar.slice(event.start, event.end)});`
+	)(
+		{ provides: { togglePan: () => calls.push('pan') } },
+		{ provides: { forDocument: () => ({ clear: () => calls.push('clear') }) } },
+		'doc',
+		{
+			provides: {
+				getActiveMode: () => 'panMode',
+				activate: (mode) => calls.push(mode === 'pointerMode' ? 'pointer' : mode),
+				activateDefaultMode: () => calls.push('default')
+			},
+			state: { activeMode: 'panMode' }
+		}
+	);
+	click();
+	assert.deepEqual(calls, expected);
+}
+
 const zoomInput = inputs.find((node) =>
 	node.attributes.some((attr) => attr.name === 'aria-label' && attr.value?.[0]?.data === 'Set zoom')
 );

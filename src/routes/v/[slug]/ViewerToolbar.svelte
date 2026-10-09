@@ -6,12 +6,13 @@
 		MinusCircleIcon,
 		PlusCircleIcon,
 		HandIcon,
-		TextAaIcon
+		CursorIcon
 	} from 'phosphor-svelte';
 	import { useScroll } from '@embedpdf/plugin-scroll/svelte';
 	import { useViewportScrollActivity } from '@embedpdf/plugin-viewport/svelte';
 	import { useZoom, ZoomMode } from '@embedpdf/plugin-zoom/svelte';
 	import { usePan } from '@embedpdf/plugin-pan/svelte';
+	import { useInteractionManager } from '@embedpdf/plugin-interaction-manager/svelte';
 	import { useSelectionCapability } from '@embedpdf/plugin-selection/svelte';
 	import { positionPopover } from './position-popover';
 
@@ -23,6 +24,7 @@
 	const scroll = useScroll(() => documentId);
 	const zoom = useZoom(() => documentId);
 	const pan = usePan(() => documentId);
+	const pointer = useInteractionManager(() => documentId);
 	const selection = useSelectionCapability();
 	const scrollActivity = useViewportScrollActivity(() => documentId);
 
@@ -250,31 +252,32 @@
 			>
 				<button
 					type="button"
-					aria-label="Pan"
+					aria-label="Pan mode"
 					aria-pressed={pan.isPanning}
-					title="Pan"
+					title="Pan mode"
 					class="inline-flex h-8 min-w-8 cursor-pointer items-center justify-center gap-1.5 rounded border-0 px-2 text-gray-900 hover:bg-gray-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 {pan.isPanning
 						? 'bg-white'
 						: 'bg-transparent'}"
 					onclick={() => {
 						selection.provides?.forDocument(documentId).clear();
-						pan.provides?.enablePan();
-					}}
-					><HandIcon size={20} aria-hidden="true" /><span class="@max-[40rem]:hidden">Pan</span
-					></button
+						pan.provides?.togglePan();
+					}}><HandIcon size={20} aria-hidden="true" /></button
 				>
 				<button
 					type="button"
-					aria-label="Selection"
-					aria-pressed={!pan.isPanning}
-					title="Selection"
-					class="inline-flex h-8 min-w-8 cursor-pointer items-center justify-center gap-1.5 rounded border-0 px-2 text-gray-900 hover:bg-gray-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 {pan.isPanning
-						? 'bg-transparent'
-						: 'bg-white'}"
-					onclick={() => pan.provides?.disablePan()}
-					><TextAaIcon size={20} aria-hidden="true" /><span class="@max-[40rem]:hidden"
-						>Selection</span
-					></button
+					aria-label="Pointer mode"
+					aria-pressed={pointer.state.activeMode === 'pointerMode'}
+					title="Pointer mode"
+					class="inline-flex h-8 min-w-8 cursor-pointer items-center justify-center gap-1.5 rounded border-0 px-2 text-gray-900 hover:bg-gray-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 {pointer
+						.state.activeMode === 'pointerMode'
+						? 'bg-white'
+						: 'bg-transparent'}"
+					onclick={() => {
+						const scope = pointer.provides;
+						if (!scope) return;
+						if (scope.getActiveMode() === 'pointerMode') scope.activateDefaultMode();
+						else scope.activate('pointerMode');
+					}}><CursorIcon size={20} aria-hidden="true" /></button
 				>
 			</div>
 		{/if}
