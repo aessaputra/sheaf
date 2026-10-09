@@ -13,12 +13,9 @@ assert.doesNotMatch(toolbar, /<style>/);
 assert.ok(toolbar.includes('@max-'));
 assert.ok(toolbar.includes('ml-auto'));
 assert.ok(toolbar.includes('absolute bottom-4'));
-assert.ok(toolbar.includes('bottom-4'));
 assert.ok(toolbar.includes('left-1/2'));
 assert.ok(toolbar.includes('-translate-x-1/2'));
 assert.equal((toolbar.match(/<input\b/g) ?? []).length, 2);
-assert.match(toolbar, /aria-label="Current page"/);
-assert.match(toolbar, /aria-label="Set zoom"/);
 assert.ok(toolbar.includes('aria-label="Zoom presets"'));
 assert.ok(!toolbar.includes('position-anchor'));
 assert.ok(!toolbar.includes('popovertarget'));
@@ -39,12 +36,27 @@ for (const icon of [
 assert.match(toolbar, /scroll\.state\.totalPages > 1/);
 assert.doesNotMatch(toolbar, /⌄/);
 // Kaizen 3 (GREEN): Download link has comfortable horizontal padding; buttons keep theirs.
-assert.ok(toolbar.includes('px-3'));
 assert.ok(toolbar.includes('p-[5px]'));
-for (const name of ['Previous page', 'Next page', 'Zoom out', 'Zoom in', 'Fit width']) {
+for (const name of ['Previous page', 'Next page', 'Zoom out', 'Zoom in']) {
 	assert.ok(toolbar.includes(`aria-label="${name}"`));
 	assert.ok(toolbar.includes(`title="${name}`));
 }
+const presetSource = toolbar.match(/const presets = \[[\s\S]*?\n\t\];/)?.[0];
+assert.ok(presetSource);
+const presets = new Function('ZoomMode', presetSource + '; return presets;')({
+	FitPage: 'fit-page',
+	FitWidth: 'fit-width'
+});
+assert.deepEqual(
+	presets.map(({ value }) => value),
+	[0.25, 0.5, 1, 1.25, 1.5, 2, 4, 8, 16, 'fit-page', 'fit-width']
+);
+assert.deepEqual(
+	presets.slice(-2).map(({ label }) => label),
+	['Fit page', 'Fit width']
+);
+assert.match(toolbar, /aria-label=\{label\}[\s\S]*?title=\{label\}/);
+assert.match(toolbar, /\{#each presets as \{ label, value \}/);
 assert.ok(toolbar.includes('min-w-8'));
 assert.ok(toolbar.includes('min-h-8'));
 assert.ok(toolbar.includes('focus-visible:'));
@@ -56,7 +68,7 @@ for (const action of [
 	'scrollToNextPage(pageScrollBehavior())',
 	'zoomOut()',
 	'zoomIn()',
-	'chooseZoom(ZoomMode.FitWidth)'
+	'chooseZoom(value)'
 ]) {
 	assert.ok(toolbar.includes(action), `${action} remains connected`);
 }

@@ -27,7 +27,7 @@ const context = {
 			}
 		}
 	},
-	getDb: () => ({
+	drizzle: () => ({
 		select: () => ({
 			from: () => ({ where: () => ({ limit: async () => [{ r2Key: 'fixture' }] }) })
 		})

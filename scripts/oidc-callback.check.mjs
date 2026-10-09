@@ -1,12 +1,11 @@
 // Local synthetic provider fixtures; real handler, oauth4webapi and WebCrypto.
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import ts from 'typescript';
+import { moduleUrl } from './check-source.mjs';
 import * as oauth from 'oauth4webapi';
 import { createServer } from 'node:http';
 
 const root = new URL('../', import.meta.url);
-let run = 0;
 async function load(path, route = false) {
 	let source = await readFile(new URL(path, root), 'utf8');
 	if (route) {
@@ -27,12 +26,7 @@ async function load(path, route = false) {
 			);
 		}
 	}
-	const { outputText } = ts.transpileModule(source, {
-		compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext }
-	});
-	return import(
-		`data:text/javascript;base64,${Buffer.from(outputText + `\n// ${run++}`).toString('base64')}`
-	);
+	return import(moduleUrl(source));
 }
 const oidc = await load('src/lib/server/oidc.ts');
 const transaction = await load('src/lib/server/oidc-transaction.ts');

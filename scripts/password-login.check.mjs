@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import ts from 'typescript';
+import { moduleUrl } from './check-source.mjs';
 
 const root = new URL('../', import.meta.url);
 const session = await import('../src/lib/server/session.ts');
@@ -55,12 +56,7 @@ source = source
 		"from '#lib/server/session.ts'",
 		`from '${new URL('src/lib/server/session.ts', root).href}'`
 	);
-const { outputText } = ts.transpileModule(source, {
-	compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext }
-});
-const { POST } = await import(
-	`data:text/javascript;base64,${Buffer.from(outputText).toString('base64')}`
-);
+const { POST } = await import(moduleUrl(source));
 for (const body of [
 	'{broken',
 	'null',

@@ -9,6 +9,7 @@
 		"preview": "wrangler dev .svelte-kit/cloudflare/_worker.js --port 4173",
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "wrangler types --check && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"check:regression": "set -e; for check in scripts/*.check.mjs; do node \"$check\"; done",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"gen": "wrangler types && prettier --write worker-configuration.d.ts",
 		"lint": "prettier --check . && eslint .",

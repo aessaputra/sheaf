@@ -62,7 +62,14 @@
 	});
 	let isPresetOpen = $state(false);
 	let presetButton = $state<HTMLButtonElement>();
-	const percentages = [25, 50, 100, 125, 150, 200, 400, 800, 1600];
+	const presets = [
+		...[25, 50, 100, 125, 150, 200, 400, 800, 1600].map((percentage) => ({
+			label: `${percentage}%`,
+			value: percentage / 100
+		})),
+		{ label: 'Fit page', value: ZoomMode.FitPage },
+		{ label: 'Fit width', value: ZoomMode.FitWidth }
+	];
 
 	function commitPage() {
 		const value = Number(pageDraft);
@@ -204,25 +211,15 @@
 						aria-label="Zoom presets"
 						class="absolute top-full left-0 z-20 mt-2 max-h-[calc(100dvh-5rem)] min-w-40 overflow-auto rounded-lg border border-gray-200 bg-white p-1 shadow-lg"
 					>
-						{#each percentages as percentage (percentage)}
+						{#each presets as { label, value } (label)}
 							<button
 								type="button"
+								aria-label={label}
+								title={label}
 								class="flex h-8 min-h-8 w-full min-w-8 shrink-0 cursor-pointer items-center justify-start rounded-md border-0 bg-transparent p-[5px] text-gray-900 hover:bg-gray-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
-								onclick={() => chooseZoom(percentage / 100)}>{percentage}%</button
+								onclick={() => chooseZoom(value)}>{label}</button
 							>
 						{/each}
-						<button
-							type="button"
-							class="flex h-8 min-h-8 w-full min-w-8 shrink-0 cursor-pointer items-center justify-start rounded-md border-0 bg-transparent p-[5px] text-gray-900 hover:bg-gray-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
-							onclick={() => chooseZoom(ZoomMode.FitPage)}>Fit page</button
-						>
-						<button
-							type="button"
-							aria-label="Fit width"
-							title="Fit width"
-							class="flex h-8 min-h-8 w-full min-w-8 shrink-0 cursor-pointer items-center justify-start rounded-md border-0 bg-transparent p-[5px] text-gray-900 hover:bg-gray-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
-							onclick={() => chooseZoom(ZoomMode.FitWidth)}>Fit width</button
-						>
 					</div>
 				{/if}
 				<button

@@ -116,20 +116,7 @@ npm run build
 npm run gen
 npm run check
 npm run lint
-node scripts/engine-lifecycle.check.mjs
-node scripts/file-response.check.mjs
-node scripts/env-validation.check.mjs
-node scripts/oidc-allowlist.check.mjs
-node scripts/oidc-start.check.mjs
-node scripts/oidc-callback.check.mjs
-node scripts/auth-hooks.check.mjs
-node scripts/admin-oidc.check.mjs
-node scripts/password-login.check.mjs
-node scripts/viewer-fallback.check.mjs
-node scripts/viewer-dependencies.check.mjs
-node scripts/pdf-links.check.mjs
-node scripts/viewer-a11y.check.mjs
-node scripts/viewer-toolbar.check.mjs
+npm run check:regression
 ```
 
 `npm run gen` regenerates and formats the official Wrangler declarations. Run it before the first check/build, after changing `wrangler.jsonc`, and after the first build (or removing `.svelte-kit`): Wrangler includes the Worker entrypoint in its types only when that build output exists. The check/build scripts retain `wrangler types --check` and will reject stale declarations. These checks and builds do not need runtime secrets.

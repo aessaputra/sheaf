@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import ts from 'typescript';
+import { moduleUrl } from './check-source.mjs';
 
 const root = new URL('../', import.meta.url);
 const secret = 'test-only-auth-hooks-secret';
@@ -10,10 +10,7 @@ async function transpile(path, replacements = []) {
 		assert.ok(source.includes(from), `missing import in ${path}: ${from}`);
 		source = source.replace(from, to);
 	}
-	const { outputText } = ts.transpileModule(source, {
-		compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext }
-	});
-	return `data:text/javascript;base64,${Buffer.from(outputText).toString('base64')}`;
+	return moduleUrl(source);
 }
 const sessionUrl = await transpile('src/lib/server/session.ts');
 const { COOKIE_NAME, createSessionToken } = await import(sessionUrl);

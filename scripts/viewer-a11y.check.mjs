@@ -16,9 +16,6 @@ assert.match(page, /<HeadlessViewer streamUrl=\{data.streamUrl\} fileName=\{data
 assert.match(viewer, /<ViewerToolbar \{documentId\} \{streamUrl\} \{fileName\}/);
 assert.ok(toolbar.includes('px-3'));
 assert.ok(viewer.includes('-outline-offset-2'));
-for (const action of ['Next', 'Previous']) {
-	assert.ok(toolbar.includes(`scrollTo${action}Page(pageScrollBehavior())`));
-}
 const body = toolbar.match(/function pageScrollBehavior\(\)[\s\S]*?\n\t\}/)?.[0];
 assert.ok(body);
 const { default: ts } = await import('typescript');

@@ -2,7 +2,7 @@ import { error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { env } from 'cloudflare:workers';
 import { desc } from 'drizzle-orm';
-import { getDb } from '#lib/server/db/index.ts';
+import { drizzle } from 'drizzle-orm/d1';
 import { pdfFiles } from '#lib/server/db/schema.ts';
 
 const SLUG_LEN = 8;
@@ -24,7 +24,7 @@ function makeSlug(): string {
 export const GET: RequestHandler = async ({ locals }) => {
 	if (!locals.session) throw error(401, 'Unauthorized');
 
-	const db = getDb(env.DB);
+	const db = drizzle(env.DB);
 
 	const rows = await db
 		.select({
@@ -61,7 +61,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	) {
 		throw error(400, 'Only PDF files are accepted.');
 	}
-	const db = getDb(env.DB);
+	const db = drizzle(env.DB);
 	for (let attempt = 0; ; attempt++) {
 		const slug = makeSlug();
 		const key = `pdfs/${slug}.pdf`;

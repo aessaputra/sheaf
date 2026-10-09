@@ -1,11 +1,9 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import ts from 'typescript';
+import { moduleUrl } from './check-source.mjs';
 import { compile } from 'svelte/compiler';
 
 const root = new URL('../', import.meta.url);
-const moduleUrl = (source) =>
-	`data:text/javascript;base64,${Buffer.from(ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext } }).outputText).toString('base64')}`;
 const helperUrl = moduleUrl(await readFile(new URL('src/lib/server/oidc.ts', root), 'utf8'));
 const server = await readFile(new URL('src/routes/admin/+page.server.ts', root), 'utf8');
 const config = {

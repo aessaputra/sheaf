@@ -1,19 +1,13 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import ts from 'typescript';
+import { moduleUrl } from './check-source.mjs';
 import * as oauth from 'oauth4webapi';
 
 const root = new URL('../', import.meta.url);
-let run = 0;
 async function load(path, replacements = []) {
 	let source = await readFile(new URL(path, root), 'utf8');
 	for (const [from, to] of replacements) source = source.replace(from, to);
-	const { outputText } = ts.transpileModule(source, {
-		compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext }
-	});
-	return import(
-		`data:text/javascript;base64,${Buffer.from(outputText + `\n// ${run++}`).toString('base64')}`
-	);
+	return import(moduleUrl(source));
 }
 const oidc = await load('src/lib/server/oidc.ts');
 const config = {
