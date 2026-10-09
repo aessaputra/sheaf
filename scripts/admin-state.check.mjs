@@ -33,7 +33,8 @@ function admin(goto = async () => {}) {
 	const calls = [],
 		errors = [],
 		successes = [],
-		navigation = [];
+		navigation = [],
+		confirmations = [];
 	const run = new Function(
 		'fetch',
 		'toast',
@@ -51,7 +52,12 @@ function admin(goto = async () => {}) {
 			calls.push({ url, options, ...pending });
 			return pending.promise;
 		},
-		{ error: (message) => errors.push(message), success: (message) => successes.push(message) },
+		Object.assign(
+			(message, options) => {
+				confirmations.push({ message, ...options });
+			},
+			{ error: (message) => errors.push(message), success: (message) => successes.push(message) }
+		),
 		async (url) => {
 			navigation.push(url);
 			await goto(url);
@@ -61,7 +67,7 @@ function admin(goto = async () => {}) {
 		() => ({ data: { authed: true } }),
 		() => {}
 	);
-	return { ...handlers, calls, errors, successes, navigation };
+	return { ...handlers, calls, errors, successes, navigation, confirmations };
 }
 const response = (files) => Response.json({ files });
 const oldFile = { slug: 'old', fileName: 'old.pdf' };
@@ -135,6 +141,17 @@ assert.deepEqual(a.snapshot().files, []);
 assert.equal(a.snapshot().loading, false);
 assert.equal(a.errors.length, 1);
 
+for (const choice of ['cancel', 'onDismiss']) {
+	const state = admin();
+	const pending = state.handleDelete('old');
+	assert.equal(state.calls.length, 0);
+	const confirmation = state.confirmations[0];
+	if (choice === 'cancel') confirmation.cancel.onClick();
+	else confirmation.onDismiss();
+	await pending;
+	assert.equal(state.calls.length, 0, 'Cancel/dismiss never deletes');
+}
+
 // Successful delete invalidates every older refresh, even a pending JSON body.
 a = admin();
 latest = a.loadFiles();
@@ -145,6 +162,10 @@ old = a.loadFiles();
 a.calls[1].resolve({ ok: true, status: 200, json: () => json.promise });
 await Promise.resolve();
 const deletion = a.handleDelete('old');
+assert.equal(a.calls.length, 2, 'No DELETE before explicit confirmation');
+assert.equal(a.confirmations[0].duration, Infinity);
+a.confirmations[0].action.onClick();
+await Promise.resolve();
 a.calls[2].resolve(new Response());
 await deletion;
 json.resolve({ files: [oldFile] });

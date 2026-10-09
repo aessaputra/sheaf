@@ -91,7 +91,16 @@
 
 	async function handleDelete(slug: string) {
 		const target = files.find((f) => f.slug === slug);
-		if (!confirm(`Delete "${target?.fileName ?? slug}"? This cannot be undone.`)) return;
+		const confirmed = await new Promise<boolean>((resolve) => {
+			toast('Delete this file?', {
+				description: `${target?.fileName ?? slug} · This cannot be undone.`,
+				duration: Infinity,
+				action: { label: 'Delete', onClick: () => resolve(true) },
+				cancel: { label: 'Cancel', onClick: () => resolve(false) },
+				onDismiss: () => resolve(false)
+			});
+		});
+		if (!confirmed || !authed || loggingOut) return;
 		let res: Response;
 		try {
 			res = await fetch(`/api/files/${slug}`, { method: 'DELETE' });

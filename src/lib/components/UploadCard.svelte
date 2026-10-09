@@ -84,7 +84,7 @@
 
 	{#if lastSlug}
 		<div class="mt-6 border-t border-[#EAEAEA] pt-4">
-			<p class="truncate text-sm text-[#2F3437]">{fileName}</p>
+			<p class="text-sm wrap-anywhere text-[#2F3437]">{fileName}</p>
 			<div class="mt-2 flex items-center gap-2">
 				<CopyLinkButton slug={lastSlug} />
 				<OpenLinkButton slug={lastSlug} />

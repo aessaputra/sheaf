@@ -39,9 +39,11 @@
 	}
 </script>
 
-<li class="flex items-center gap-4 border-b border-[#EAEAEA] py-4 last:border-b-0">
-	<div class="min-w-0 flex-1">
-		<p class="truncate text-sm font-medium text-[#111111]">{file.fileName}</p>
+<li
+	class="flex flex-wrap items-center gap-x-4 gap-y-3 border-b border-[#EAEAEA] py-4 last:border-b-0"
+>
+	<div class="w-full min-w-0 sm:w-auto sm:flex-1">
+		<p class="text-sm font-medium wrap-anywhere text-[#111111]">{file.fileName}</p>
 		<p class="mt-0.5 font-mono text-xs text-[#787774]">
 			{formatMeta(file.sizeBytes, file.createdAt)}
 		</p>
@@ -52,7 +54,7 @@
 		type="button"
 		onclick={handleDelete}
 		disabled={deleting}
-		class="inline-flex items-center rounded-md border border-[#EAEAEA] px-2.5 py-1.5 text-xs text-[#9F2F2D] transition-colors hover:bg-[#FDEBEC] disabled:opacity-50"
+		class="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border border-[#EAEAEA] px-2.5 py-1.5 text-xs text-[#9F2F2D] transition-colors hover:bg-[#FDEBEC] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#787774] disabled:opacity-50"
 		title="Delete file"
 	>
 		<TrashIcon size={14} />
