@@ -22,7 +22,6 @@
 			return;
 		}
 		copied = true;
-		toast.success('Link copied.');
 		if (timer) clearTimeout(timer);
 		timer = setTimeout(() => (copied = false), 1500);
 	}
