@@ -23,6 +23,7 @@ export const GET: RequestHandler = async ({ cookies, request }) => {
 			throw new Error('Missing authorization endpoint');
 		url = validatedOidcUrl(as.authorization_endpoint);
 	} catch {
+		console.error('OIDC failure', { stage: 'start-discovery', category: 'provider-or-metadata' });
 		return new Response('OIDC discovery failed.', { status: 502 });
 	}
 

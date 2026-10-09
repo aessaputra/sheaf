@@ -64,13 +64,20 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	const db = drizzle(env.DB);
 	for (let attempt = 0; ; attempt++) {
 		const slug = makeSlug();
-		const key = `pdfs/${slug}.pdf`;
+		const key = `pdfs/${crypto.randomUUID()}.pdf`;
 		try {
 			await env.PDFS.put(key, file.stream(), {
 				httpMetadata: { contentType: 'application/pdf' }
 			});
 		} catch {
-			throw error(500, 'Upload failed. Nothing was saved.');
+			console.error('File upload failed', { stage: 'put', key });
+			try {
+				await env.PDFS.delete(key);
+			} catch {
+				console.error('File upload failed', { stage: 'cleanup', key });
+				throw error(500, 'Upload failed. Storage cleanup failed; contact an administrator.');
+			}
+			throw error(500, 'Upload failed. Please try again.');
 		}
 		try {
 			await db.insert(pdfFiles).values({
@@ -82,10 +89,16 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			});
 			return Response.json({ slug });
 		} catch (e) {
-			await env.PDFS.delete(key).catch(() => {});
+			console.error('File upload failed', { stage: 'insert', key });
+			try {
+				await env.PDFS.delete(key);
+			} catch {
+				console.error('File upload failed', { stage: 'cleanup', key });
+				throw error(500, 'Upload failed. Storage cleanup failed; contact an administrator.');
+			}
 			if (attempt === 0 && String((e as Error)?.message ?? e).includes('UNIQUE constraint failed'))
 				continue;
-			throw error(500, 'Upload failed. Nothing was saved.');
+			throw error(500, 'Upload failed. Please try again.');
 		}
 	}
 };

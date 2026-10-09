@@ -19,30 +19,42 @@
 	// svelte-ignore state_referenced_locally (initial auth snapshot; loading is reset explicitly in loadFiles)
 	let loading = $state(data.authed);
 	let loadError = $state<string | null>(null);
+	let loggingOut = $state(false);
+	let loadGeneration = 0;
 
-	function goToLogin(message?: string) {
-		authed = false;
-		files = [];
+	function invalidateLoads() {
+		loadGeneration++;
 		loading = false;
 		loadError = null;
+	}
+
+	function goToLogin(message?: string) {
+		invalidateLoads();
+		authed = false;
+		files = [];
 		if (message) toast.error(message);
 	}
 
 	async function loadFiles() {
+		if (!authed || loggingOut) return;
+		const generation = ++loadGeneration;
 		loading = true;
 		loadError = null;
 		try {
 			const res = await fetch('/api/files');
+			if (generation !== loadGeneration) return;
 			if (res.status === 401) {
 				goToLogin('Session expired. Please sign in again.');
 				return;
 			}
 			if (!res.ok) throw new Error(`Load failed (${res.status}).`);
-			files = ((await res.json()) as { files: FileEntry[] }).files ?? [];
+			const body = (await res.json()) as { files: FileEntry[] };
+			if (generation === loadGeneration) files = body.files ?? [];
 		} catch (err) {
-			loadError = err instanceof Error ? err.message : 'Could not load files.';
+			if (generation === loadGeneration)
+				loadError = err instanceof Error ? err.message : 'Could not load files.';
 		} finally {
-			loading = false;
+			if (generation === loadGeneration) loading = false;
 		}
 	}
 
@@ -57,7 +69,13 @@
 				body: JSON.stringify({ password })
 			});
 			if (!res.ok) {
-				toast.error('Invalid credentials.');
+				toast.error(
+					res.status === 429
+						? 'Too many attempts. Please try again in a minute.'
+						: res.status === 401
+							? 'Invalid credentials.'
+							: 'Sign in is unavailable. Please try again.'
+				);
 				return;
 			}
 			authed = true;
@@ -77,7 +95,7 @@
 		try {
 			res = await fetch(`/api/files/${slug}`, { method: 'DELETE' });
 		} catch {
-			toast.error('Network error. File was not deleted.');
+			toast.error('Could not confirm deletion. Please retry.');
 			return;
 		}
 		if (res.status === 401) {
@@ -85,18 +103,37 @@
 			return;
 		}
 		if (!res.ok) {
-			toast.error('Delete failed.');
+			const body = (await res.json().catch(() => null)) as { message?: string } | null;
+			toast.error(body?.message ?? 'Deletion failed. Please retry.');
 			return;
 		}
+		invalidateLoads();
 		files = files.filter((f) => f.slug !== slug);
 		toast.success('File deleted.');
 	}
 
 	async function logout() {
-		await fetch('/api/logout', { method: 'POST' });
-		goToLogin();
-		password = '';
-		goto('/');
+		if (loggingOut) return;
+		loggingOut = true;
+		invalidateLoads();
+		try {
+			const res = await fetch('/api/logout', { method: 'POST' });
+			if (!res.ok) {
+				toast.error('Sign out failed. Please try again.');
+				return;
+			}
+			goToLogin();
+			password = '';
+			try {
+				await goto('/');
+			} catch {
+				toast.error('Signed out, but could not open the home page.');
+			}
+		} catch {
+			toast.error('Could not confirm sign out. Please try again.');
+		} finally {
+			loggingOut = false;
+		}
 	}
 
 	onMount(() => {
@@ -161,10 +198,11 @@
 			<button
 				type="button"
 				onclick={logout}
+				disabled={loggingOut}
 				class="inline-flex items-center gap-1.5 text-sm text-[#787774] transition-colors hover:text-[#111111]"
 			>
 				<SignOutIcon size={16} />
-				Sign out
+				{loggingOut ? 'Signing out…' : 'Sign out'}
 			</button>
 		</div>
 

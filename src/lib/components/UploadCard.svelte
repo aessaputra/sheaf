@@ -37,7 +37,7 @@
 			}
 			if (!res.ok) {
 				const body = (await res.json().catch(() => null)) as { message?: string } | null;
-				throw new Error(body?.message ?? `Upload failed (${res.status}). Nothing was saved.`);
+				throw new Error(body?.message ?? `Upload failed (${res.status}).`);
 			}
 			const { slug } = (await res.json()) as { slug: string };
 
@@ -46,7 +46,11 @@
 			toast.success('File uploaded.');
 			onuploaded();
 		} catch (err) {
-			toast.error(err instanceof Error ? err.message : 'Upload failed. Nothing was saved.');
+			toast.error(
+				err instanceof Error
+					? `${err.message} Check the file list before retrying.`
+					: 'Could not confirm the upload. Check the file list before retrying.'
+			);
 		} finally {
 			uploading = false;
 			if (fileInput) fileInput.value = '';
@@ -59,7 +63,7 @@
 	<p class="mt-1 text-sm leading-[1.6] text-[#787774]">Pick a file. A share link appears here.</p>
 
 	<label
-		class="mt-6 flex cursor-pointer flex-col items-center gap-3 rounded-lg border border-dashed border-[#EAEAEA] bg-[#F7F6F3] px-6 py-10 text-center transition-colors hover:bg-[#EFEDE9]"
+		class="mt-6 flex cursor-pointer flex-col items-center gap-3 rounded-lg border border-dashed border-[#EAEAEA] bg-[#F7F6F3] px-6 py-10 text-center transition-colors focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-[#787774] hover:bg-[#EFEDE9]"
 	>
 		{#if uploading}
 			<SpinnerGapIcon size={28} class="animate-spin text-[#787774]" />

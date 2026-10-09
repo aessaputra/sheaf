@@ -16,6 +16,13 @@
 		}
 	],
 	"r2_buckets": [{ "binding": "PDFS", "bucket_name": "sheaf-pdfs" }],
+	"ratelimits": [
+		{
+			"name": "LOGIN_RATE_LIMITER",
+			"namespace_id": "232712089893100",
+			"simple": { "limit": 3, "period": 60 }
+		}
+	],
 	"secrets": {
 		"required": ["ADMIN_PASSWORD", "SESSION_SECRET"]
 	},

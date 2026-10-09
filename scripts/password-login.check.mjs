@@ -1,15 +1,24 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import ts from 'typescript';
+import { parse } from 'svelte/compiler';
 import { moduleUrl } from './check-source.mjs';
 
 const root = new URL('../', import.meta.url);
 const session = await import('../src/lib/server/session.ts');
 const component = await readFile(new URL('src/routes/admin/+page.svelte', root), 'utf8');
-const handler = component.match(
-	/async function handleLogin\(event: SubmitEvent\) \{[\s\S]*?\n\t\}/
-)?.[0];
-assert.ok(handler);
+const { content } = parse(component, { modern: true }).instance;
+const script = ts.createSourceFile(
+	'admin.ts',
+	component.slice(content.start, content.end),
+	ts.ScriptTarget.Latest,
+	true
+);
+const declaration = script.statements.find(
+	(node) => ts.isFunctionDeclaration(node) && node.name?.text === 'handleLogin'
+);
+assert.ok(declaration);
+const handler = declaration.getText(script);
 assert.match(
 	component,
 	/<input[\s\S]*?type="password"[\s\S]*?\brequired\b[\s\S]*?bind:value=\{password\}/
@@ -49,6 +58,10 @@ for (const [a, b, equal] of [
 let source = await readFile(new URL('src/routes/api/login/+server.ts', root), 'utf8');
 source = source
 	.replace(
+		"import { env } from 'cloudflare:workers';",
+		'const env = { LOGIN_RATE_LIMITER: { limit: async () => ({ success: true }) } };'
+	)
+	.replace(
 		"import { ADMIN_PASSWORD, SESSION_SECRET } from '$app/env/private';",
 		"const ADMIN_PASSWORD = 'synthetic-password'; const SESSION_SECRET = 's'.repeat(32);"
 	)
@@ -68,6 +81,7 @@ for (const body of [
 	const writes = [];
 	const response = await POST({
 		request: new Request('https://sheaf.example.test/api/login', { method: 'POST', body }),
+		getClientAddress: () => '192.0.2.1',
 		cookies: { set: (...args) => writes.push(args) }
 	});
 	const valid = body === '{"password":"synthetic-password"}';

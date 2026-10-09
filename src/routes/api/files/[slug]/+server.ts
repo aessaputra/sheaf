@@ -11,11 +11,24 @@ export const DELETE: RequestHandler = async ({ locals, params }) => {
 	if (!/^[0-9a-hjkmnp-z]{8}$/.test(slug)) throw error(400, 'Invalid slug.');
 	const db = drizzle(env.DB);
 	const existing = await db
-		.select({ slug: pdfFiles.slug })
+		.select({ r2Key: pdfFiles.r2Key })
 		.from(pdfFiles)
 		.where(eq(pdfFiles.slug, slug));
-	if (existing.length === 0) throw error(404, 'File not found.');
-	await env.PDFS.delete(`pdfs/${slug}.pdf`);
-	await db.delete(pdfFiles).where(eq(pdfFiles.slug, slug));
+	if (existing.length === 0) return Response.json({ ok: true });
+	const key = existing[0].r2Key;
+	// Log only application-generated keys, never arbitrary stored values.
+	const logKey = /^pdfs\/(?:[0-9a-hjkmnp-z]{8}|[0-9a-f-]{36})\.pdf$/.test(key) ? key : '[redacted]';
+	try {
+		await env.PDFS.delete(key);
+	} catch {
+		console.error('File deletion failed', { stage: 'r2-delete', key: logKey });
+		throw error(500, 'File deletion failed. Please retry.');
+	}
+	try {
+		await db.delete(pdfFiles).where(eq(pdfFiles.slug, slug));
+	} catch {
+		console.error('File deletion incomplete', { stage: 'd1-delete', key: logKey });
+		throw error(500, 'File storage deleted, but metadata deletion failed. Please retry deletion.');
+	}
 	return Response.json({ ok: true });
 };

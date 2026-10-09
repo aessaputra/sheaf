@@ -17,7 +17,15 @@
 
 	$effect(() => {
 		if (!selected) return;
-		const close = () => menu.hidePopover();
+		const close = (event: Event) => {
+			const target = event.target;
+			if (
+				target === document ||
+				target === window ||
+				(target instanceof Node && target !== trigger && target.contains(trigger))
+			)
+				menu.hidePopover();
+		};
 		window.addEventListener('scroll', close, true);
 		return () => window.removeEventListener('scroll', close, true);
 	});

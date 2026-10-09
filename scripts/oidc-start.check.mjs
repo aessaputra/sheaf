@@ -51,6 +51,9 @@ async function invoke(overrides = {}, metadata = {}, dev = false, fetcher) {
 	});
 	return { response, writes };
 }
+const logs = [];
+const originalError = console.error;
+console.error = (...args) => logs.push(args);
 const originalFetch = globalThis.fetch;
 try {
 	for (const [configured, metadata] of [
@@ -273,8 +276,15 @@ try {
 		),
 		null
 	);
+	assert.ok(logs.length > 0);
+	for (const entry of logs)
+		assert.deepEqual(entry, [
+			'OIDC failure',
+			{ stage: 'start-discovery', category: 'provider-or-metadata' }
+		]);
 	console.log('OIDC start and transaction checks passed');
 } finally {
+	console.error = originalError;
 	globalThis.fetch = originalFetch;
 	delete globalThis.__oidcCheck;
 }

@@ -29,15 +29,21 @@ export const GET: RequestHandler = async ({ cookies, request, url }) => {
 		);
 		if (as.issuer !== config.issuerIdentifier) throw new Error('OIDC issuer mismatch');
 	} catch {
+		console.error('OIDC failure', {
+			stage: 'callback-discovery',
+			category: 'provider-or-metadata'
+		});
 		return new Response('OIDC discovery failed.', { status: 502 });
 	}
 	let params: URLSearchParams;
 	try {
 		params = oauth.validateAuthResponse(as, client, url.searchParams, saved.state);
 	} catch {
+		console.error('OIDC failure', { stage: 'callback-validation', category: 'invalid-response' });
 		return new Response('Invalid OIDC callback.', { status: 400 });
 	}
 	let claims: oauth.IDToken | undefined;
+	let stage = 'token-exchange';
 	try {
 		const methods = as.token_endpoint_auth_methods_supported ?? ['client_secret_basic'];
 		if (!methods.includes(config.method)) throw new Error('Unsupported client authentication');
@@ -61,12 +67,15 @@ export const GET: RequestHandler = async ({ cookies, request, url }) => {
 			});
 			return { response, tokens };
 		});
+		stage = 'signature-validation';
 		await withOidcDeadline((signal) =>
 			oauth.validateApplicationLevelSignature(as, response, { signal })
 		);
+		stage = 'claims-validation';
 		claims = oauth.getValidatedIdTokenClaims(tokens);
 		if (!claims?.sub) throw new Error('Missing subject');
 	} catch {
+		console.error('OIDC failure', { stage, category: 'provider-or-token' });
 		return new Response('OIDC login failed.', { status: 502 });
 	}
 	if (

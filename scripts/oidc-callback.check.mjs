@@ -191,6 +191,9 @@ async function invoke(options = {}) {
 	assert.ok(calls.filter((url) => url.endsWith('/token')).length <= 1, 'never retry consumed code');
 	return { response, writes, calls };
 }
+const logs = [];
+const originalError = console.error;
+console.error = (...args) => logs.push(args);
 const originalFetch = globalThis.fetch;
 const originalTimeout = globalThis.setTimeout;
 globalThis.setTimeout = (fn, ms, ...args) => originalTimeout(fn, ms === 10_000 ? 30 : ms, ...args);
@@ -412,8 +415,30 @@ try {
 		{ OIDC_REDIRECT_URI: 'https://sheaf.example.test/api/auth/oidc/callback?' }
 	])
 		assert.equal((await invoke({ config })).response.status, 503);
+	for (const stage of [
+		'callback-discovery',
+		'callback-validation',
+		'token-exchange',
+		'signature-validation'
+	])
+		assert.ok(
+			logs.some(([, detail]) => detail.stage === stage),
+			stage
+		);
+	for (const [label, detail] of logs) {
+		assert.equal(label, 'OIDC failure');
+		assert.deepEqual(Object.keys(detail).sort(), ['category', 'stage']);
+		assert.ok(
+			['provider-or-metadata', 'invalid-response', 'provider-or-token'].includes(detail.category)
+		);
+	}
+	assert.equal(
+		/fixture|https:|Subject-A|offline|nonce|secret|token=/.test(JSON.stringify(logs)),
+		false
+	);
 	console.log('OIDC callback checks passed (local synthetic signed JWT fixtures)');
 } finally {
+	console.error = originalError;
 	globalThis.fetch = originalFetch;
 	globalThis.setTimeout = originalTimeout;
 	delete globalThis.__callback;

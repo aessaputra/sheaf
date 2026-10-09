@@ -164,10 +164,7 @@
 						inputmode="decimal"
 						class="h-8 max-h-8 min-h-8 w-10 min-w-0 rounded-md border-0 bg-transparent px-1 text-right text-sm text-gray-900 hover:bg-gray-200 focus-visible:bg-white focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue-500"
 						value={zoomDraft ?? Math.round(zoom.state.currentZoomLevel * 100)}
-						onfocus={(event) => {
-							zoomDraft = event.currentTarget.value;
-							event.currentTarget.select();
-						}}
+						onfocus={(event) => event.currentTarget.select()}
 						oninput={(event) => (zoomDraft = event.currentTarget.value)}
 						onblur={commitZoom}
 						onkeydown={(event) => {

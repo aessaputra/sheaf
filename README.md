@@ -54,6 +54,8 @@ Open `/admin`, sign in, upload a PDF, and copy its `/v/[slug]` link. Local D1 an
 
 `wrangler.jsonc` binds `DB` to D1 and `PDFS` to R2. Uploads pass through the Worker directly into R2; no S3 credentials are needed. The app has no fixed upload-size cap, but Cloudflare request, memory, and R2 limits still apply.
 
+Password login uses the native `LOGIN_RATE_LIMITER` binding: 3 attempts per client IP per 60 seconds, before reading credentials. The Cloudflare adapter supplies the trusted client address; forwarded headers do not choose the key. Denied attempts return 429 with `Retry-After: 60`; limiter failures return 503 without authenticating. Limits are approximate and per Cloudflare location, not a strict global cap. The fixed, randomly generated namespace ID in `wrangler.jsonc` must be unique within your account; use a different positive integer if it is already in use.
+
 The viewer fetches its pinned PDFium WASM from jsDelivr, so viewing requires access to that CDN.
 
 ## Optional OIDC login

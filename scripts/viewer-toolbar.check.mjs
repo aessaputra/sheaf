@@ -37,20 +37,57 @@ const zoomInput = inputs.find((node) =>
 );
 const blur = zoomInput.attributes.find((attr) => attr.name === 'onblur');
 assert.equal(blur.value.expression.name, 'commitZoom');
-const keydown = zoomInput.attributes.find((attr) => attr.name === 'onkeydown').value.expression;
-for (const key of ['Enter', 'Escape']) {
-	const applied = [];
-	const run = new Function(
-		'zoom',
-		ts.transpile(`let zoomDraft = '200';
+const zoomEvents = ['onfocus', 'oninput', 'onblur', 'onkeydown']
+	.map((name) => {
+		const expression = zoomInput.attributes.find((attr) => attr.name === name).value.expression;
+		return `${name}: ${toolbar.slice(expression.start, expression.end)}`;
+	})
+	.join(',');
+const createZoomInput = new Function(
+	'zoom',
+	ts.transpile(`let zoomDraft = null;
 ${functionSource('validZoom')}
 ${functionSource('commitZoom')}
-const keydown = ${toolbar.slice(keydown.start, keydown.end)};
-keydown({ key: '${key}', isComposing: false, preventDefault() {}, currentTarget: { blur: commitZoom } });
-return zoomDraft;`)
-	);
-	assert.equal(run({ provides: { requestZoom: (value) => applied.push(value) } }), null);
-	assert.deepEqual(applied, key === 'Enter' ? [2] : []);
+return { ${zoomEvents}, draft: () => zoomDraft };`)
+);
+// Execute the wired focus/input/keydown/blur sequence, including fit modes.
+for (const mode of ['fit-page', 'fit-width', 1]) {
+	for (const scenario of [
+		{ value: null, key: null, expected: [] },
+		{ value: null, key: 'Enter', expected: [] },
+		{ value: '200', key: null, expected: [2] },
+		{ value: '200', key: 'Enter', expected: [2] },
+		{ value: '200', key: 'Escape', expected: [] },
+		{ value: 'invalid', key: 'Enter', expected: [] },
+		{ value: '19', key: null, expected: [] }
+	]) {
+		const applied = [];
+		const handlers = createZoomInput({
+			state: { zoomMode: mode, currentZoomLevel: 1.25 },
+			provides: { requestZoom: (value) => applied.push(value) }
+		});
+		const currentTarget = {
+			value: '125',
+			select() {},
+			blur: () => handlers.onblur()
+		};
+		handlers.onfocus({ currentTarget });
+		if (scenario.value !== null) {
+			currentTarget.value = scenario.value;
+			handlers.oninput({ currentTarget });
+		}
+		if (scenario.key) {
+			handlers.onkeydown({
+				key: scenario.key,
+				isComposing: false,
+				preventDefault() {},
+				currentTarget
+			});
+		}
+		handlers.onblur(); // A subsequent blur cannot apply the draft twice.
+		assert.equal(handlers.draft(), null);
+		assert.deepEqual(applied, scenario.expected, `${mode}: ${JSON.stringify(scenario)}`);
+	}
 }
 const handler = functionSource('handleZoomKeydown');
 const presetDeclaration = script.statements

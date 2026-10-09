@@ -22,7 +22,27 @@ const declaration = script.statements
 assert.equal(declaration.initializer.expression.getText(script), 'usePdfiumEngine');
 assert.equal(declaration.initializer.arguments.length, 0, 'Use the version-matched default CDN');
 assert.match(source, /from '@embedpdf\/engines\/svelte'/);
-assert.doesNotMatch(source, /onMount|createPdfiumEngine|closeAllDocuments|\.destroy\(/);
+// Lifecycle hooks for unrelated UI are allowed; manual engine ownership is not.
+function checkEngineOwnership(node) {
+	if (ts.isImportSpecifier(node)) {
+		assert.notEqual((node.propertyName ?? node.name).text, 'createPdfiumEngine');
+	}
+	if (ts.isCallExpression(node)) {
+		const callee = node.expression;
+		assert.notEqual(callee.getText(script), 'createPdfiumEngine');
+		if (ts.isPropertyAccessExpression(callee)) {
+			const receiver = callee.expression.getText(script);
+			if (['engine', 'pdfEngine', 'pdfEngine.engine'].includes(receiver)) {
+				assert.ok(
+					!['destroy', 'closeAllDocuments'].includes(callee.name.text),
+					'Engine teardown belongs to the upstream hook'
+				);
+			}
+		}
+	}
+	ts.forEachChild(node, checkEngineOwnership);
+}
+checkEngineOwnership(script);
 assert.ok(source.indexOf('{#if pdfEngine.error}') < source.indexOf('pdfEngine.isLoading'));
 assert.match(source, /<EmbedPDF engine=\{pdfEngine.engine\}/);
 compile(source, { generate: 'client' });
