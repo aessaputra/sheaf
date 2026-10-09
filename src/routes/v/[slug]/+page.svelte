@@ -31,12 +31,14 @@
 				<p role={importFailed ? 'alert' : 'status'}>
 					{importFailed ? 'Could not load the PDF viewer.' : 'Loading…'}
 				</p>
-				<a
-					href={data.streamUrl}
-					download={data.fileName}
-					class="inline-flex min-h-8 items-center rounded-md px-3 text-sm text-gray-900 hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-blue-500"
-					>Download</a
-				>
+				{#if importFailed}
+					<a
+						href={data.streamUrl}
+						download={data.fileName}
+						class="inline-flex min-h-8 items-center rounded-md px-3 text-sm text-gray-900 hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-blue-500"
+						>Download</a
+					>
+				{/if}
 			</div>
 		{/if}
 	</main>

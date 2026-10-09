@@ -27,9 +27,15 @@ for (const [message, failed] of [
 	});
 	assert.ok(body.includes(message));
 	assert.ok(body.includes(`role="${failed ? 'alert' : 'status'}"`));
-	assert.match(body, /href="\/v\/fixture\/file"/);
-	assert.match(body, /download="fixture.pdf"/);
-	assert.ok(body.includes('Download'));
+	assert.equal(
+		body.includes('Download'),
+		failed,
+		'Download is an error fallback, not a loading action'
+	);
+	if (failed) {
+		assert.match(body, /href="\/v\/fixture\/file"/);
+		assert.match(body, /download="fixture.pdf"/);
+	}
 }
 assert.equal((source.match(/\{@render fallback\(/g) ?? []).length, 3);
 console.log('PASS: shared viewer fallback preserves loading/error roles and download target.');

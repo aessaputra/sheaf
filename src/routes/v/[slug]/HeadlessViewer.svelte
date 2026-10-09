@@ -5,7 +5,7 @@
 	import { createPluginRegistration } from '@embedpdf/core';
 	import { ViewportPluginPackage, Viewport } from '@embedpdf/plugin-viewport/svelte';
 	import { Scroller, ScrollPluginPackage, ScrollStrategy } from '@embedpdf/plugin-scroll/svelte';
-	import type { PageLayout } from '@embedpdf/plugin-scroll';
+	import type { RenderPageProps } from '@embedpdf/plugin-scroll/svelte';
 	import {
 		DocumentManagerPluginPackage,
 		DocumentContent
@@ -100,12 +100,14 @@
 {#snippet fallback(message: string, failed: boolean)}
 	<div class="flex flex-col items-center gap-4 p-8 text-center">
 		<p role={failed ? 'alert' : 'status'}>{message}</p>
-		<a
-			href={streamUrl}
-			download={fileName}
-			class="inline-flex min-h-8 items-center rounded-md px-3 text-sm text-gray-900 hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-blue-500"
-			>Download</a
-		>
+		{#if failed}
+			<a
+				href={streamUrl}
+				download={fileName}
+				class="inline-flex min-h-8 items-center rounded-md px-3 text-sm text-gray-900 hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-blue-500"
+				>Download</a
+			>
+		{/if}
 	</div>
 {/snippet}
 
@@ -120,7 +122,7 @@
 					<DocumentContent {documentId}>
 						{#snippet children(documentContent)}
 							{#if documentContent.isLoaded}
-								{#snippet renderPage(page: PageLayout)}
+								{#snippet renderPage(page: RenderPageProps)}
 									<PagePointerProvider {documentId} pageIndex={page.pageIndex}>
 										<RenderLayer
 											{documentId}

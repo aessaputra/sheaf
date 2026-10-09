@@ -9,6 +9,7 @@
 	import { useScroll } from '@embedpdf/plugin-scroll/svelte';
 	import { useViewportScrollActivity } from '@embedpdf/plugin-viewport/svelte';
 	import { useZoom, ZoomMode } from '@embedpdf/plugin-zoom/svelte';
+	import { positionPopover } from './position-popover';
 
 	let {
 		documentId,
@@ -21,9 +22,12 @@
 
 	let navVisible = $state(true);
 	let hideTimer: ReturnType<typeof setTimeout> | null = null;
+	let navHovered = false;
+	let navFocused = false;
 
 	function startHideTimer() {
 		if (hideTimer) clearTimeout(hideTimer);
+		if (navHovered || navFocused) return;
 		hideTimer = setTimeout(() => {
 			navVisible = false;
 		}, 4000);
@@ -40,6 +44,13 @@
 		if (hideTimer) clearTimeout(hideTimer);
 	}
 
+	function releaseNavFocus(event: FocusEvent & { currentTarget: HTMLDivElement }) {
+		if (event.relatedTarget instanceof Node && event.currentTarget.contains(event.relatedTarget))
+			return;
+		navFocused = false;
+		startHideTimer();
+	}
+
 	// Scroll activity reappears the nav and restarts the hide timer (v2 onScrollActivity).
 	$effect(() => {
 		if (scrollActivity.current.isScrolling) showNav();
@@ -54,14 +65,10 @@
 
 	let pageDraft = $state<string | null>(null);
 	let zoomDraft = $state<string | null>(null);
-	let zoomEditing = false;
-	// External zoom replaces an uncommitted blurred draft, never an active edit.
-	$effect(() => {
-		void zoom.state.currentZoomLevel;
-		if (!zoomEditing) zoomDraft = null;
-	});
 	let isPresetOpen = $state(false);
 	let presetButton = $state<HTMLButtonElement>();
+	let presetMenu = $state<HTMLDivElement>();
+	const presetId = $props.id();
 	const presets = [
 		...[25, 50, 100, 125, 150, 200, 400, 800, 1600].map((percentage) => ({
 			label: `${percentage}%`,
@@ -105,7 +112,7 @@
 	function chooseZoom(value: number | ZoomMode) {
 		zoom.provides?.requestZoom(value);
 		zoomDraft = null;
-		isPresetOpen = false;
+		presetMenu?.hidePopover();
 		presetButton?.focus();
 	}
 
@@ -114,12 +121,6 @@
 	}
 
 	function handleZoomKeydown(event: KeyboardEvent) {
-		if (event.key === 'Escape' && isPresetOpen) {
-			event.preventDefault();
-			isPresetOpen = false;
-			presetButton?.focus();
-			return;
-		}
 		if (
 			!event.ctrlKey ||
 			event.altKey ||
@@ -144,7 +145,7 @@
 	}
 </script>
 
-<svelte:window onkeydown={handleZoomKeydown} />
+<svelte:window onkeydown={handleZoomKeydown} onresize={() => presetMenu?.hidePopover()} />
 
 {#if scroll.provides && scroll.state.totalPages > 0}
 	<nav
@@ -164,20 +165,16 @@
 						class="h-8 max-h-8 min-h-8 w-10 min-w-0 rounded-md border-0 bg-transparent px-1 text-right text-sm text-gray-900 hover:bg-gray-200 focus-visible:bg-white focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue-500"
 						value={zoomDraft ?? Math.round(zoom.state.currentZoomLevel * 100)}
 						onfocus={(event) => {
-							zoomEditing = true;
 							zoomDraft = event.currentTarget.value;
 							event.currentTarget.select();
 						}}
 						oninput={(event) => (zoomDraft = event.currentTarget.value)}
-						onblur={() => {
-							zoomEditing = false;
-							if (!validZoom()) zoomDraft = null;
-						}}
+						onblur={commitZoom}
 						onkeydown={(event) => {
 							if (event.isComposing) return;
 							if (event.key === 'Enter') {
 								event.preventDefault();
-								commitZoom();
+								event.currentTarget.blur();
 							} else if (event.key === 'Escape') {
 								zoomDraft = null;
 								event.currentTarget.blur();
@@ -193,35 +190,32 @@
 					aria-expanded={isPresetOpen}
 					title="Zoom presets"
 					class="inline-flex h-8 min-h-8 min-w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-[5px] text-gray-900 hover:bg-gray-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
-					onclick={() => (isPresetOpen = !isPresetOpen)}
+					popovertarget={presetId}
 				>
 					<CaretDownIcon size={20} aria-hidden="true" />
 				</button>
-				{#if isPresetOpen}
-					<div
-						class="fixed inset-0 z-10"
-						role="button"
-						tabindex="-1"
-						aria-label="Close zoom presets"
-						onclick={() => (isPresetOpen = false)}
-						onkeydown={handleZoomKeydown}
-					></div>
-					<div
-						role="group"
-						aria-label="Zoom presets"
-						class="absolute top-full left-0 z-20 mt-2 max-h-[calc(100dvh-5rem)] min-w-40 overflow-auto rounded-lg border border-gray-200 bg-white p-1 shadow-lg"
-					>
-						{#each presets as { label, value } (label)}
-							<button
-								type="button"
-								aria-label={label}
-								title={label}
-								class="flex h-8 min-h-8 w-full min-w-8 shrink-0 cursor-pointer items-center justify-start rounded-md border-0 bg-transparent p-[5px] text-gray-900 hover:bg-gray-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
-								onclick={() => chooseZoom(value)}>{label}</button
-							>
-						{/each}
-					</div>
-				{/if}
+				<div
+					id={presetId}
+					bind:this={presetMenu}
+					popover="auto"
+					ontoggle={(event) => {
+						isPresetOpen = event.newState === 'open';
+						if (isPresetOpen && presetButton) positionPopover(event.currentTarget, presetButton);
+					}}
+					role="group"
+					aria-label="Zoom presets"
+					class="fixed inset-auto m-0 w-max min-w-40 overflow-auto rounded-lg border border-gray-200 bg-white p-1 shadow-lg"
+				>
+					{#each presets as { label, value } (label)}
+						<button
+							type="button"
+							aria-label={label}
+							title={label}
+							class="flex h-8 min-h-8 w-full min-w-8 shrink-0 cursor-pointer items-center justify-start rounded-md border-0 bg-transparent p-[5px] text-gray-900 hover:bg-gray-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+							onclick={() => chooseZoom(value)}>{label}</button
+						>
+					{/each}
+				</div>
 				<button
 					type="button"
 					aria-label="Zoom out"
@@ -259,10 +253,19 @@
 			class="absolute bottom-4 left-1/2 z-[1] flex max-w-[calc(100%-2rem)] -translate-x-1/2 items-center gap-0.5 rounded-lg border border-gray-200 bg-white p-1 shadow-lg transition-opacity duration-300 {navVisible
 				? ''
 				: 'pointer-events-none opacity-0'}"
-			onmouseenter={holdNav}
-			onmouseleave={startHideTimer}
-			onfocusin={holdNav}
-			onfocusout={startHideTimer}
+			onmouseenter={() => {
+				navHovered = true;
+				holdNav();
+			}}
+			onmouseleave={() => {
+				navHovered = false;
+				startHideTimer();
+			}}
+			onfocusin={() => {
+				navFocused = true;
+				holdNav();
+			}}
+			onfocusout={releaseNavFocus}
 		>
 			<button
 				type="button"

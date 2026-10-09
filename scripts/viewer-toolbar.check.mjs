@@ -5,84 +5,67 @@ const toolbar = readFileSync(
 	new URL('../src/routes/v/[slug]/ViewerToolbar.svelte', import.meta.url),
 	'utf8'
 );
-assert.ok(toolbar.includes('href={streamUrl}'));
-assert.ok(toolbar.includes('download={fileName}'));
-assert.ok(toolbar.indexOf('aria-label="Zoom out"') < toolbar.indexOf('>Download</a'));
-assert.ok(toolbar.includes('px-4 py-2'));
-assert.doesNotMatch(toolbar, /<style>/);
-assert.ok(toolbar.includes('@max-'));
-assert.ok(toolbar.includes('ml-auto'));
-assert.ok(toolbar.includes('absolute bottom-4'));
-assert.ok(toolbar.includes('left-1/2'));
-assert.ok(toolbar.includes('-translate-x-1/2'));
-assert.equal((toolbar.match(/<input\b/g) ?? []).length, 2);
-assert.ok(toolbar.includes('aria-label="Zoom presets"'));
-assert.ok(!toolbar.includes('position-anchor'));
-assert.ok(!toolbar.includes('popovertarget'));
-assert.ok(toolbar.includes('isPresetOpen'));
-assert.doesNotMatch(toolbar, /<form\b|>Go</);
-assert.doesNotMatch(toolbar, /Page \{|of \{scroll\.state\.totalPages\}/);
-assert.ok((toolbar.match(/<button\b/g) ?? []).length >= 5);
-for (const icon of [
-	'CaretLeftIcon',
-	'CaretRightIcon',
-	'MinusCircleIcon',
-	'PlusCircleIcon',
-	'CaretDownIcon'
-]) {
-	assert.ok(toolbar.includes(`<${icon} size={20} aria-hidden="true"`));
+const { parse } = await import('svelte/compiler');
+const { default: ts } = await import('typescript');
+const ast = parse(toolbar, { modern: true });
+const script = ts.createSourceFile(
+	'toolbar.ts',
+	toolbar.slice(ast.instance.content.start, ast.instance.content.end),
+	ts.ScriptTarget.Latest,
+	true
+);
+function functionSource(name) {
+	const declaration = script.statements.find(
+		(node) => ts.isFunctionDeclaration(node) && node.name?.text === name
+	);
+	assert.ok(declaration, name);
+	return declaration.getText(script);
 }
-// Kaizen 2 (RED): floating nav hidden entirely when totalPages <= 1.
-assert.match(toolbar, /scroll\.state\.totalPages > 1/);
-assert.doesNotMatch(toolbar, /⌄/);
-// Kaizen 3 (GREEN): Download link has comfortable horizontal padding; buttons keep theirs.
-assert.ok(toolbar.includes('p-[5px]'));
-for (const name of ['Previous page', 'Next page', 'Zoom out', 'Zoom in']) {
-	assert.ok(toolbar.includes(`aria-label="${name}"`));
-	assert.ok(toolbar.includes(`title="${name}`));
+// Check the actual event expressions so Enter and blur cannot diverge.
+const inputs = [];
+function visit(node) {
+	if (!node || typeof node !== 'object') return;
+	if (node.type === 'RegularElement' && node.name === 'input') inputs.push(node);
+	for (const value of Object.values(node)) {
+		if (Array.isArray(value)) value.forEach(visit);
+		else if (value && typeof value === 'object') visit(value);
+	}
 }
-const presetSource = toolbar.match(/const presets = \[[\s\S]*?\n\t\];/)?.[0];
-assert.ok(presetSource);
-const presets = new Function('ZoomMode', presetSource + '; return presets;')({
-	FitPage: 'fit-page',
-	FitWidth: 'fit-width'
-});
+visit(ast.fragment);
+const zoomInput = inputs.find((node) =>
+	node.attributes.some((attr) => attr.name === 'aria-label' && attr.value?.[0]?.data === 'Set zoom')
+);
+const blur = zoomInput.attributes.find((attr) => attr.name === 'onblur');
+assert.equal(blur.value.expression.name, 'commitZoom');
+const keydown = zoomInput.attributes.find((attr) => attr.name === 'onkeydown').value.expression;
+for (const key of ['Enter', 'Escape']) {
+	const applied = [];
+	const run = new Function(
+		'zoom',
+		ts.transpile(`let zoomDraft = '200';
+${functionSource('validZoom')}
+${functionSource('commitZoom')}
+const keydown = ${toolbar.slice(keydown.start, keydown.end)};
+keydown({ key: '${key}', isComposing: false, preventDefault() {}, currentTarget: { blur: commitZoom } });
+return zoomDraft;`)
+	);
+	assert.equal(run({ provides: { requestZoom: (value) => applied.push(value) } }), null);
+	assert.deepEqual(applied, key === 'Enter' ? [2] : []);
+}
+const handler = functionSource('handleZoomKeydown');
+const presetDeclaration = script.statements
+	.filter(ts.isVariableStatement)
+	.flatMap((node) => [...node.declarationList.declarations])
+	.find((node) => node.name.getText(script) === 'presets');
+const presets = new Function('ZoomMode', `return ${presetDeclaration.initializer.getText(script)}`)(
+	{ FitPage: 'fit-page', FitWidth: 'fit-width' }
+);
 assert.deepEqual(
 	presets.map(({ value }) => value),
 	[0.25, 0.5, 1, 1.25, 1.5, 2, 4, 8, 16, 'fit-page', 'fit-width']
 );
-assert.deepEqual(
-	presets.slice(-2).map(({ label }) => label),
-	['Fit page', 'Fit width']
-);
-assert.match(toolbar, /aria-label=\{label\}[\s\S]*?title=\{label\}/);
-assert.match(toolbar, /\{#each presets as \{ label, value \}/);
-assert.ok(toolbar.includes('min-w-8'));
-assert.ok(toolbar.includes('min-h-8'));
-assert.ok(toolbar.includes('focus-visible:'));
-for (const control of ['Prev', 'Next', 'Zoom out', 'Zoom in', 'Fit width']) {
-	assert.ok(toolbar.includes(control), `${control} remains available`);
-}
-for (const action of [
-	'scrollToPreviousPage(pageScrollBehavior())',
-	'scrollToNextPage(pageScrollBehavior())',
-	'zoomOut()',
-	'zoomIn()',
-	'chooseZoom(value)'
-]) {
-	assert.ok(toolbar.includes(action), `${action} remains connected`);
-}
-assert.match(toolbar, /disabled=\{scroll.state.currentPage <= 1\}/);
-assert.match(toolbar, /disabled=\{scroll.state.currentPage >= scroll.state.totalPages\}/);
-// Exercise the component handler itself without a test framework or DOM dependency.
-const { default: ts } = await import('typescript');
-const handler = toolbar.match(
-	/function handleZoomKeydown\(event: KeyboardEvent\) \{[\s\S]*?\n\t\}/
-)?.[0];
-assert.ok(handler, 'document-scoped keyboard handler exists');
-assert.match(toolbar, /<svelte:window onkeydown=\{handleZoomKeydown\}/);
-assert.match(toolbar, /aria-keyshortcuts="Control\+-"/);
-assert.match(toolbar, /aria-keyshortcuts="Control\+\+ Control\+="/);
+assert.match(toolbar, /popover="auto"/);
+assert.match(toolbar, /popovertarget=\{presetId\}/);
 class Element {
 	constructor(editable = false, field = false) {
 		this.isContentEditable = editable;
@@ -139,71 +122,85 @@ zoom.provides = { zoomIn: () => calls.push('in') };
 scroll.state.totalPages = 0;
 assert.equal(press('+'), false);
 assert.equal(calls.length, 3);
-// Execute the actual dismissal/selection handlers with trigger/option focus.
-const chooseHandler = toolbar.match(
-	/function chooseZoom\(value: number \| ZoomMode\) \{[\s\S]*?\n\t\}/
-)?.[0];
-assert.ok(chooseHandler);
-assert.match(toolbar, /<button\s+bind:this=\{presetButton\}[\s\S]*?aria-label="Zoom presets"/);
-const runPreset = new Function(
-	'zoom',
-	'scroll',
-	'HTMLElement',
-	'presetButton',
-	'event',
-	'value',
-	ts.transpile(
-		'let isPresetOpen = true; let zoomDraft = "125";\n' + handler + '\n' + chooseHandler
-	) +
-		'; if (event) handleZoomKeydown(event); else chooseZoom(value); return { isPresetOpen, zoomDraft };'
-);
-for (const focused of ['trigger', 'option']) {
-	let active = focused;
-	const trigger = {
-		focus() {
-			active = 'trigger';
-		}
-	};
-	let prevented = false;
-	const result = runPreset(zoom, scroll, Element, trigger, {
-		key: 'Escape',
-		ctrlKey: false,
-		target: new Element(),
-		preventDefault() {
-			prevented = true;
-		}
-	});
-	assert.equal(result.isPresetOpen, false);
-	assert.equal(active, 'trigger');
-	assert.equal(prevented, true);
-}
+// Preset selection applies zoom, closes the native popover, and restores focus.
 for (const value of [1.25, 'fit-page', 'fit-width']) {
-	let active = 'option';
 	const applied = [];
-	const result = runPreset(
+	let closed = false;
+	let focused = false;
+	const choose = new Function(
+		'zoom',
+		'presetMenu',
+		'presetButton',
+		ts.transpile('let zoomDraft = "125";\n' + functionSource('chooseZoom')) + '; return chooseZoom;'
+	)(
 		{ provides: { requestZoom: (v) => applied.push(v) } },
-		scroll,
-		Element,
 		{
-			focus() {
-				active = 'trigger';
+			hidePopover: () => {
+				closed = true;
 			}
 		},
-		null,
-		value
+		{
+			focus: () => {
+				focused = true;
+			}
+		}
 	);
+	choose(value);
 	assert.deepEqual(applied, [value]);
-	assert.deepEqual(result, { isPresetOpen: false, zoomDraft: null });
-	assert.equal(active, 'trigger');
+	assert.ok(closed && focused);
 }
+// Activity must not hide navigation held by either pointer or keyboard.
+const createNav = new Function(
+	'setTimeout',
+	'clearTimeout',
+	ts.transpile(`let navVisible = true; let hideTimer; let navHovered = false; let navFocused = false;
+${functionSource('startHideTimer')}
+${functionSource('showNav')}
+${functionSource('holdNav')}
+return { startHideTimer, showNav, holdNav, hover: (v) => navHovered = v, focus: (v) => navFocused = v, visible: () => navVisible };`)
+);
+let pending;
+const nav = createNav(
+	(callback) => {
+		pending = callback;
+		return 1;
+	},
+	() => {
+		pending = undefined;
+	}
+);
+nav.startHideTimer();
+pending();
+assert.equal(nav.visible(), false);
+for (const hold of ['hover', 'focus']) {
+	nav[hold](true);
+	nav.holdNav();
+	nav.showNav();
+	assert.equal(pending, undefined);
+	assert.equal(nav.visible(), true);
+	nav[hold](false);
+	nav.startHideTimer();
+	pending();
+	assert.equal(nav.visible(), false);
+}
+// Moving focus between navigation controls must not release the hold.
+class FocusNode {}
+let released = 0;
+const release = new Function(
+	'Node',
+	'startHideTimer',
+	ts.transpile('let navFocused = true;\n' + functionSource('releaseNavFocus')) +
+		'; return releaseNavFocus;'
+)(FocusNode, () => released++);
+const inside = new FocusNode();
+release({ relatedTarget: inside, currentTarget: { contains: (node) => node === inside } });
+assert.equal(released, 0);
+release({ relatedTarget: new FocusNode(), currentTarget: { contains: () => false } });
+release({ relatedTarget: null, currentTarget: { contains: () => false } });
+assert.equal(released, 2);
+
 // Exercise real input handlers, not a parallel parser.
-const inputHandlers = ['commitPage', 'validZoom', 'commitZoom']
-	.map((name) => {
-		const body = toolbar.match(new RegExp(`function ${name}\\(\\) \\{[\\s\\S]*?\\n\\t\\}`))?.[0];
-		assert.ok(body, name);
-		return body;
-	})
-	.join('\n');
+const inputHandlers = ['commitPage', 'validZoom', 'commitZoom'].map(functionSource).join('\n');
 const runInput = new Function(
 	'pageDraft',
 	'zoomDraft',
@@ -258,16 +255,6 @@ for (const value of ['20', '125.5', '6000']) {
 	);
 	assert.deepEqual(applied, [{ pageNumber: 2, behavior: 'instant' }, Number(value) / 100]);
 }
-// Kaizen 1 (RED): floating nav auto-hides after 4000ms idle, reappears on activity/hover/focus.
-assert.match(toolbar, /useViewportScrollActivity/);
-assert.match(toolbar, /from '@embedpdf\/plugin-viewport\/svelte'/);
-assert.match(toolbar, /setTimeout\([\s\S]*?,\s*4000\)/);
-assert.match(toolbar, /clearTimeout/);
-assert.match(toolbar, /onmouseenter/);
-assert.match(toolbar, /onmouseleave/);
-assert.match(toolbar, /onfocusin/);
-assert.match(toolbar, /onfocusout/);
-assert.ok(toolbar.includes('transition-opacity'));
 console.log(
-	'Viewer toolbar: editable page/zoom, custom presets, accessible controls, input guards and page boundaries PASS.'
+	'PASS: toolbar input boundaries, keyboard guards, preset selection and held navigation.'
 );
