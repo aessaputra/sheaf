@@ -15,6 +15,7 @@
 	import { ZoomGestureWrapper, ZoomPluginPackage, ZoomMode } from '@embedpdf/plugin-zoom/svelte';
 	import { PanPluginPackage } from '@embedpdf/plugin-pan/svelte';
 	import { SelectionPluginPackage } from '@embedpdf/plugin-selection/svelte';
+	import type { ResolvedPathname } from '$app/types';
 
 	import {
 		AnnotationPluginPackage,
@@ -43,7 +44,7 @@
 		}
 	];
 
-	let { streamUrl, fileName }: { streamUrl: string; fileName: string } = $props();
+	let { streamUrl, fileName }: { streamUrl: ResolvedPathname; fileName: string } = $props();
 
 	const pdfEngine = usePdfiumEngine();
 	const plugins = $derived([

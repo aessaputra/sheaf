@@ -39,6 +39,7 @@ function admin(goto = async () => {}) {
 		'fetch',
 		'toast',
 		'goto',
+		'resolve',
 		'confirm',
 		'$state',
 		'$props',
@@ -62,6 +63,7 @@ function admin(goto = async () => {}) {
 			navigation.push(url);
 			await goto(url);
 		},
+		(id) => id,
 		() => true,
 		(value) => value,
 		() => ({ data: { authed: true } }),

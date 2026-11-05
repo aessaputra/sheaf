@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { ArrowSquareOutIcon } from 'phosphor-svelte';
+	import { resolve } from '$app/paths';
 
 	let { slug }: { slug: string } = $props();
 
-	const link = $derived(`/v/${slug}`);
+	const link = $derived(resolve('/v/[slug]', { slug }));
 </script>
 
 <a

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { SpinnerGapIcon } from 'phosphor-svelte';
+	import type { ResolvedPathname } from '$app/types';
 
 	let {
 		message,
@@ -9,7 +10,7 @@
 	}: {
 		message: string;
 		failed: boolean;
-		streamUrl: string;
+		streamUrl: ResolvedPathname;
 		fileName: string;
 	} = $props();
 </script>

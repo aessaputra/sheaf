@@ -15,12 +15,13 @@
 	import { useInteractionManager } from '@embedpdf/plugin-interaction-manager/svelte';
 	import { useSelectionCapability } from '@embedpdf/plugin-selection/svelte';
 	import { positionPopover } from './position-popover';
+	import type { ResolvedPathname } from '$app/types';
 
 	let {
 		documentId,
 		streamUrl,
 		fileName
-	}: { documentId: string; streamUrl: string; fileName: string } = $props();
+	}: { documentId: string; streamUrl: ResolvedPathname; fileName: string } = $props();
 	const scroll = useScroll(() => documentId);
 	const zoom = useZoom(() => documentId);
 	const pan = usePan(() => documentId);

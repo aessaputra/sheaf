@@ -3,6 +3,7 @@ import type { PageServerLoad } from './$types';
 import { env } from 'cloudflare:workers';
 import { eq } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/d1';
+import { resolve } from '$app/paths';
 import { pdfFiles } from '#lib/server/db/schema.ts';
 
 export const load: PageServerLoad = async ({ params }) => {
@@ -11,5 +12,5 @@ export const load: PageServerLoad = async ({ params }) => {
 	const db = drizzle(env.DB);
 	const rows = await db.select().from(pdfFiles).where(eq(pdfFiles.slug, slug)).limit(1);
 	if (rows.length === 0) throw error(404, 'Not found.');
-	return { fileName: rows[0].fileName, streamUrl: `/v/${slug}/file` };
+	return { fileName: rows[0].fileName, streamUrl: resolve('/v/[slug]/file', { slug }) };
 };

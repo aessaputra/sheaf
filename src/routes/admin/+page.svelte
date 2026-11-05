@@ -4,6 +4,7 @@
 	import { toast, Toaster } from 'svelte-sonner';
 	import { SignOutIcon } from 'phosphor-svelte';
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import UploadCard from '#lib/components/UploadCard.svelte';
 	import FileRow from '#lib/components/FileRow.svelte';
 	import type { FileEntry } from '#lib/server/admin-files.ts';
@@ -144,7 +145,7 @@
 			goToLogin();
 			password = '';
 			try {
-				await goto('/');
+				await goto(resolve('/'));
 			} catch {
 				toast.error('Signed out, but could not open the home page.');
 			}
@@ -198,7 +199,7 @@
 			</button>
 			{#if data.oidcEnabled}
 				<a
-					href="/api/auth/oidc/start"
+					href={resolve('/api/auth/oidc/start')}
 					class="mt-3 block w-full rounded-md border border-[#EAEAEA] bg-white px-6 py-3 text-center text-sm font-medium text-[#111111] transition-colors hover:bg-[#F5F5F4] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#787774]"
 				>
 					Sign in with OIDC
