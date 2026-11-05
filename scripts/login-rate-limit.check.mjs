@@ -15,6 +15,10 @@ const source = (await readFile(new URL('src/routes/api/login/+server.ts', root),
 	.replace(
 		"from '#lib/server/session.ts'",
 		`from '${new URL('src/lib/server/session.ts', root).href}'`
+	)
+	.replace(
+		"from '#lib/server/body-limit.ts'",
+		`from '${new URL('src/lib/server/body-limit.ts', root).href}'`
 	);
 const keys = [];
 let result = { success: true };
@@ -34,31 +38,31 @@ try {
 			outcome === 'failure'
 				? new Error('sensitive upstream detail')
 				: { success: outcome === 'allowed' };
-		let reads = 0;
 		const writes = [];
 		const logs = [];
 		const originalError = console.error;
 		console.error = (...args) => logs.push(args);
+		const request = new Request('https://sheaf.example.test/api/login', {
+			method: 'POST',
+			headers: { 'x-forwarded-for': '203.0.113.1' },
+			body: JSON.stringify({ password: 'synthetic-password' })
+		});
 		let response;
 		try {
 			response = await POST({
 				getClientAddress: () => '192.0.2.1',
-				request: {
-					url: 'https://sheaf.example.test/api/login',
-					headers: new Headers({ 'x-forwarded-for': '203.0.113.1' }),
-					async json() {
-						reads++;
-						assert.equal(outcome, 'allowed', 'blocked requests must not parse credentials');
-						return { password: 'synthetic-password' };
-					}
-				},
+				request,
 				cookies: { set: (...args) => writes.push(args) }
 			});
 		} finally {
 			console.error = originalError;
 		}
 		assert.equal(response.status, { allowed: 200, denied: 429, failure: 503 }[outcome]);
-		assert.equal(reads, outcome === 'allowed' ? 1 : 0);
+		assert.equal(
+			request.bodyUsed,
+			outcome === 'allowed',
+			'blocked requests must not read credentials'
+		);
 		assert.equal(writes.length, outcome === 'allowed' ? 1 : 0);
 		assert.equal(response.headers.get('retry-after'), outcome === 'denied' ? '60' : null);
 		assert.deepEqual(

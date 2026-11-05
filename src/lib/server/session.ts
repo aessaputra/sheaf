@@ -41,7 +41,7 @@ export async function verifySessionToken(
 	token: string | undefined,
 	secret: string
 ): Promise<boolean> {
-	if (!token) return false;
+	if (!token || token.length > 1024) return false;
 	const dot = token.lastIndexOf('.');
 	if (dot < 1) return false;
 	const payload = token.slice(0, dot);

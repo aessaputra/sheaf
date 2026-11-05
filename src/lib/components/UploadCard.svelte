@@ -39,7 +39,8 @@
 				const body = (await res.json().catch(() => null)) as { message?: string } | null;
 				throw new Error(body?.message ?? `Upload failed (${res.status}).`);
 			}
-			const { slug } = (await res.json()) as { slug: string };
+			const { slug } = ((await res.json()) ?? {}) as { slug?: unknown };
+			if (typeof slug !== 'string' || !slug) throw new Error('Upload failed (invalid response).');
 
 			lastSlug = slug;
 			fileName = file.name;

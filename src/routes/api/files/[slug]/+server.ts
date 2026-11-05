@@ -17,7 +17,12 @@ export const DELETE: RequestHandler = async ({ locals, params }) => {
 	if (existing.length === 0) return Response.json({ ok: true });
 	const key = existing[0].r2Key;
 	// Log only application-generated keys, never arbitrary stored values.
-	const logKey = /^pdfs\/(?:[0-9a-hjkmnp-z]{8}|[0-9a-f-]{36})\.pdf$/.test(key) ? key : '[redacted]';
+	const managedKey = /^pdfs\/(?:[0-9a-hjkmnp-z]{8}|[0-9a-f-]{36})\.pdf$/.test(key);
+	const logKey = managedKey ? key : '[redacted]';
+	if (!managedKey) {
+		console.error('File deletion skipped', { stage: 'r2-key', key: logKey });
+		throw error(500, 'File deletion failed: unexpected stored key.');
+	}
 	try {
 		await env.PDFS.delete(key);
 	} catch {

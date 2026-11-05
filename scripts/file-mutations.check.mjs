@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { moduleUrl } from './check-source.mjs';
+import { limitBodyStream } from '../src/lib/server/body-limit.ts';
 
 const root = new URL('../', import.meta.url);
 const logs = [];
@@ -11,6 +12,7 @@ const rows = new Map();
 let fault;
 const fixture = {
 	error: (status, message) => Object.assign(new Error(message), { status }),
+	limitBodyStream,
 	env: {
 		PDFS: {
 			async put(key, stream) {
@@ -51,7 +53,9 @@ async function load(path) {
 	let source = await readFile(new URL(path, root), 'utf8');
 	source = source.replace(/^import .* from '(?!\.\/\$types)[^']+';$/gm, '');
 	return import(
-		moduleUrl(`const { error, env, drizzle, eq, pdfFiles } = globalThis.__filesCheck;\n${source}`)
+		moduleUrl(
+			`const { error, env, drizzle, eq, pdfFiles, limitBodyStream } = globalThis.__filesCheck;\n${source}`
+		)
 	);
 }
 const { POST } = await load('src/routes/api/files/+server.ts');
@@ -59,11 +63,35 @@ const { DELETE } = await load('src/routes/api/files/[slug]/+server.ts');
 const upload = () => {
 	const form = new FormData();
 	form.set('file', new File(['%PDF-new'], 'private-name.pdf', { type: 'application/pdf' }));
-	return POST({ locals: { session: true }, request: { formData: async () => form } });
+	return POST({
+		locals: { session: true },
+		request: new Request('https://sheaf.example.test/api/files', { method: 'POST', body: form })
+	});
 };
 const remove = (slug) => DELETE({ locals: { session: true }, params: { slug } });
 const originalRandom = crypto.getRandomValues;
 try {
+	await assert.rejects(
+		() =>
+			POST({
+				locals: { session: true },
+				request: {
+					headers: new Headers({ 'content-length': String(28 * 1024 * 1024) }),
+					body: null
+				}
+			}),
+		{ status: 413 },
+		'oversized declared body is rejected before parsing'
+	);
+	const limitedStream = limitBodyStream(
+		new Request('https://sheaf.example.test/api/files', {
+			method: 'POST',
+			body: new Uint8Array(1024)
+		}),
+		100
+	);
+	await assert.rejects(() => new Response(limitedStream.stream).arrayBuffer());
+	assert.equal(limitedStream.exceeded(), true, 'oversized streamed body is rejected while reading');
 	crypto.getRandomValues = (bytes) => bytes.fill(0);
 	rows.set('00000000', { slug: '00000000', r2Key: 'pdfs/00000000.pdf' });
 	objects.set('pdfs/00000000.pdf', '%PDF-original');
@@ -109,6 +137,13 @@ try {
 	assert.deepEqual(await (await remove(slug)).json(), { ok: true });
 	assert.deepEqual(await (await remove('00000000')).json(), { ok: true });
 	assert.equal(objects.size, 0, 'legacy stored key deleted');
+	rows.set('99999999', { slug: '99999999', r2Key: 'secret/other' });
+	objects.set('secret/other', 'keep');
+	await assert.rejects(() => remove('99999999'), { status: 500 });
+	assert.ok(rows.has('99999999'), 'unexpected key keeps metadata for cleanup');
+	assert.ok(objects.has('secret/other'), 'unexpected key never deletes an arbitrary object');
+	rows.delete('99999999');
+	objects.delete('secret/other');
 	console.log(
 		'File mutation checks passed (collision, put/insert/cleanup faults, delete retry and legacy keys)'
 	);

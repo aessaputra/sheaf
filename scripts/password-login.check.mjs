@@ -68,8 +68,20 @@ source = source
 	.replace(
 		"from '#lib/server/session.ts'",
 		`from '${new URL('src/lib/server/session.ts', root).href}'`
+	)
+	.replace(
+		"from '#lib/server/body-limit.ts'",
+		`from '${new URL('src/lib/server/body-limit.ts', root).href}'`
 	);
 const { POST } = await import(moduleUrl(source));
+for (const body of ['x'.repeat(2048), JSON.stringify({ password: 'x'.repeat(2048) })]) {
+	const response = await POST({
+		request: new Request('https://sheaf.example.test/api/login', { method: 'POST', body }),
+		getClientAddress: () => '192.0.2.1',
+		cookies: { set() {} }
+	});
+	assert.equal(response.status, 413, 'login rejects an oversized streamed body while reading');
+}
 for (const body of [
 	'{broken',
 	'null',

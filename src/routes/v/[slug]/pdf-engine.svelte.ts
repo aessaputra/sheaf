@@ -12,10 +12,18 @@ export function usePdfiumEngine() {
 		let cancelled = false;
 		let engine: PdfEngine | null = null;
 		const dispose = (owned: PdfEngine) => {
-			owned.closeAllDocuments().wait(
-				() => owned.destroy?.(),
-				() => owned.destroy?.()
-			);
+			const destroy = () => {
+				try {
+					owned.destroy?.();
+				} catch {
+					// Disposal is best-effort; a failing destroy must not leak the worker.
+				}
+			};
+			try {
+				owned.closeAllDocuments().wait(destroy, destroy);
+			} catch {
+				destroy();
+			}
 		};
 		void (async () => {
 			try {

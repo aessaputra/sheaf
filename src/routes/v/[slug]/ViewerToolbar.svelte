@@ -60,8 +60,14 @@
 	}
 
 	// Scroll activity reappears the nav and restarts the hide timer (v2 onScrollActivity).
+	// Re-arm while scrolling so a long scroll cannot hide the nav mid-gesture.
 	$effect(() => {
-		if (scrollActivity.current.isScrolling) showNav();
+		if (!scrollActivity.current.isScrolling) return;
+		showNav();
+		const interval = setInterval(() => {
+			if (scrollActivity.current.isScrolling) showNav();
+		}, 2000);
+		return () => clearInterval(interval);
 	});
 
 	$effect(() => {

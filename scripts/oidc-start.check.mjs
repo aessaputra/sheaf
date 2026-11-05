@@ -233,7 +233,7 @@ try {
 		payload,
 		`${payload}.${signature}.extra`,
 		`${payload}.!`,
-		`${payload.slice(0, -1)}A.${signature}`,
+		`${payload.slice(0, -1)}${payload.endsWith('A') ? 'B' : 'A'}.${signature}`,
 		`${payload}.${signature[0] === 'A' ? 'B' : 'A'}${signature.slice(1)}`
 	])
 		assert.equal(await verifyOidcTransaction(bad, config.SESSION_SECRET, now), null);

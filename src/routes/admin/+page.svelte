@@ -23,6 +23,12 @@
 	let loggingOut = $state(false);
 	let loadGeneration = 0;
 
+	const isFileEntry = (value: unknown): value is FileEntry =>
+		typeof value === 'object' &&
+		value !== null &&
+		typeof (value as FileEntry).slug === 'string' &&
+		typeof (value as FileEntry).fileName === 'string';
+
 	function invalidateLoads() {
 		loadGeneration++;
 		loading = false;
@@ -49,8 +55,11 @@
 				return;
 			}
 			if (!res.ok) throw new Error(`Load failed (${res.status}).`);
-			const body = (await res.json()) as { files: FileEntry[] };
-			if (generation === loadGeneration) files = body.files ?? [];
+			const payload: unknown = await res.json();
+			const list = (payload as { files?: unknown } | null)?.files;
+			if (!Array.isArray(list) || !list.every(isFileEntry))
+				throw new Error('Load failed (invalid response).');
+			if (generation === loadGeneration) files = list as FileEntry[];
 		} catch (err) {
 			if (generation === loadGeneration)
 				loadError = err instanceof Error ? err.message : 'Could not load files.';

@@ -4,9 +4,13 @@ import { env } from 'cloudflare:workers';
 import { drizzle } from 'drizzle-orm/d1';
 import { listFiles } from '#lib/server/admin-files.ts';
 import { pdfFiles } from '#lib/server/db/schema.ts';
+import { limitBodyStream } from '#lib/server/body-limit.ts';
 
 const SLUG_LEN = 8;
 const ALPHABET = '0123456789abcdefghjkmnpqrstuvwxyz';
+const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
+// Multipart headers only; the file field itself is capped separately.
+const MAX_REQUEST_BYTES = MAX_UPLOAD_BYTES + 2 * 1024 * 1024;
 
 function makeSlug(): string {
 	let slug = '';
@@ -31,9 +35,22 @@ export const GET: RequestHandler = async ({ locals }) => {
 
 export const POST: RequestHandler = async ({ request, locals }) => {
 	if (!locals.session) throw error(401, 'Unauthorized');
-	const form = await request.formData().catch(() => null);
+	const declaredSize = Number(request.headers?.get?.('content-length'));
+	if (Number.isSafeInteger(declaredSize) && declaredSize > MAX_REQUEST_BYTES)
+		throw error(413, 'File is too large.');
+	const contentType = request.headers?.get?.('content-type') ?? '';
+	if (!/^multipart\/form-data(?:;|$)/i.test(contentType) || !/boundary=/i.test(contentType))
+		throw error(400, 'Only PDF files are accepted.');
+	const limited = limitBodyStream(request, MAX_REQUEST_BYTES);
+	const form = await new Response(limited.stream, {
+		headers: { 'content-type': contentType }
+	})
+		.formData()
+		.catch(() => null);
+	if (limited.exceeded()) throw error(413, 'File is too large.');
 	const file = form?.get('file');
 	if (!(file instanceof File) || file.size === 0) throw error(400, 'No file provided.');
+	if (file.size > MAX_UPLOAD_BYTES) throw error(413, 'File is too large.');
 	const name = file.name || '';
 	if (
 		!name.toLowerCase().endsWith('.pdf') ||
