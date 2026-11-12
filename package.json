@@ -57,7 +57,7 @@
 		"@embedpdf/plugin-document-manager": "2.15.1",
 		"@embedpdf/plugin-interaction-manager": "2.15.1",
 		"@embedpdf/plugin-pan": "2.15.1",
-		"@embedpdf/plugin-render": "2.15.1",
+		"@embedpdf/plugin-render": "3.1.0",
 		"@embedpdf/plugin-scroll": "2.15.1",
 		"@embedpdf/plugin-selection": "2.15.1",
 		"@embedpdf/plugin-tiling": "2.15.1",
