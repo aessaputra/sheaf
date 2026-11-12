@@ -53,7 +53,7 @@
 		"@embedpdf/core": "2.15.1",
 		"@embedpdf/engines": "2.15.1",
 		"@embedpdf/models": "2.15.1",
-		"@embedpdf/plugin-annotation": "2.15.1",
+		"@embedpdf/plugin-annotation": "3.1.0",
 		"@embedpdf/plugin-document-manager": "2.15.1",
 		"@embedpdf/plugin-interaction-manager": "2.15.1",
 		"@embedpdf/plugin-pan": "2.15.1",
