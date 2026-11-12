@@ -50,7 +50,7 @@
 		"sharp": "^0.35.5"
 	},
 	"dependencies": {
-		"@embedpdf/core": "2.15.1",
+		"@embedpdf/core": "3.1.0",
 		"@embedpdf/engines": "2.15.1",
 		"@embedpdf/models": "2.15.1",
 		"@embedpdf/plugin-annotation": "2.15.1",
