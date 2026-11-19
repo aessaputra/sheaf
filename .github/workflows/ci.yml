@@ -43,7 +43,7 @@ jobs:
           npm run check
           npm run lint
       - name: Security audit
-        run: npm audit --include=dev --audit-level=high
+        run: node scripts/audit-check.mjs
       - name: CI summary
         if: always()
         run: |
@@ -55,7 +55,7 @@ jobs:
             echo '- Type check: npm run check'
             echo '- Regression checks: npm run check:regression'
             echo '- Build: npm run build'
-            echo '- Security audit: npm audit --include=dev --audit-level=high'
+            echo '- Security audit: node scripts/audit-check.mjs'
           } >> "$GITHUB_STEP_SUMMARY"
 
   deploy:
