@@ -1,143 +1,91 @@
 <script lang="ts">
-	import { usePdfiumEngine } from './pdf-engine.svelte';
-	import { EmbedPDF } from '@embedpdf/core/svelte';
-	import { createPluginRegistration } from '@embedpdf/core';
-	import { ViewportPluginPackage, Viewport } from '@embedpdf/plugin-viewport/svelte';
-	import { Scroller, ScrollPluginPackage, ScrollStrategy } from '@embedpdf/plugin-scroll/svelte';
-	import type { RenderPageProps } from '@embedpdf/plugin-scroll/svelte';
-	import {
-		DocumentManagerPluginPackage,
-		DocumentContent
-	} from '@embedpdf/plugin-document-manager/svelte';
-	import { RenderLayer, RenderPluginPackage } from '@embedpdf/plugin-render/svelte';
-	import { TilingPluginPackage } from '@embedpdf/plugin-tiling/svelte';
-	import SafeTilingLayer from './SafeTilingLayer.svelte';
-	import { ZoomGestureWrapper, ZoomPluginPackage, ZoomMode } from '@embedpdf/plugin-zoom/svelte';
-	import { PanPluginPackage } from '@embedpdf/plugin-pan/svelte';
-	import { SelectionPluginPackage } from '@embedpdf/plugin-selection/svelte';
+	import { Viewer, DocumentGate } from '@embedpdf/svelte/runtime';
+	import { Stage, stagePlugin } from '@embedpdf/svelte/stage';
+	import { RenderLayer, renderPlugin } from '@embedpdf/svelte/render';
+	import { SelectionLayer, selectionPlugin } from '@embedpdf/svelte/selection';
+	import { AnnotationLayer, annotationPlugin } from '@embedpdf/svelte/annotation';
+	import { interactionPlugin } from '@embedpdf/svelte/interaction';
+	import { LinkLayer, linkPlugin } from '@embedpdf/svelte/link';
+	import { localEngine } from '@embedpdf/engine';
+	import type { HostFetch } from '@embedpdf/svelte/runtime';
 	import type { ResolvedPathname } from '$app/types';
 
-	import {
-		AnnotationPluginPackage,
-		AnnotationLayer,
-		LockModeType
-	} from '@embedpdf/plugin-annotation/svelte';
-	import {
-		InteractionManagerPluginPackage,
-		GlobalPointerProvider,
-		PagePointerProvider
-	} from '@embedpdf/plugin-interaction-manager/svelte';
-	import { PdfAnnotationSubtype, type PdfAnnotationObject } from '@embedpdf/models';
-	import PdfLink from './PdfLink.svelte';
-	import PdfLinkNavigation from './PdfLinkNavigation.svelte';
 	import PdfSelection from './PdfSelection.svelte';
-	import PanActivator from './PanActivator.svelte';
 	import ViewerFallback from './ViewerFallback.svelte';
 	import ViewerToolbar from './ViewerToolbar.svelte';
-
-	const linkRenderers = [
-		{
-			id: 'link',
-			matches: (annotation: PdfAnnotationObject) => annotation.type === PdfAnnotationSubtype.LINK,
-			component: PdfLink,
-			renderLocked: PdfLink
-		}
-	];
+	import { readPdfResponse } from './viewer-fetch';
 
 	let { streamUrl, fileName }: { streamUrl: ResolvedPathname; fileName: string } = $props();
 
-	const pdfEngine = usePdfiumEngine();
-	const plugins = $derived([
-		createPluginRegistration(DocumentManagerPluginPackage, {
-			initialDocuments: [{ url: streamUrl }]
+	const supportsTouch =
+		typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+
+	let downloadPercent = $state<number | null>(null);
+	const loadingMessage = $derived(
+		downloadPercent === null ? 'Loading…' : `Loading… ${downloadPercent}%`
+	);
+
+	const fetchWithProgress: HostFetch = async (url, { signal }) =>
+		readPdfResponse(await fetch(url, { signal }), (percent) => {
+			downloadPercent = percent;
+		});
+
+	const plugins = [
+		stagePlugin(),
+		renderPlugin(),
+		interactionPlugin({ defaultTool: supportsTouch ? 'pan' : 'pointer' }),
+		selectionPlugin(),
+		annotationPlugin({
+			editable: false,
+			tools: [{ id: 'highlight', defaults: { color: '#FFCD45' } }]
 		}),
-		createPluginRegistration(ViewportPluginPackage, { viewportGap: 10 }),
-		createPluginRegistration(ScrollPluginPackage, { defaultStrategy: ScrollStrategy.Vertical }),
-		createPluginRegistration(RenderPluginPackage),
-		createPluginRegistration(TilingPluginPackage, {
-			tileSize: 768,
-			overlapPx: 2.5,
-			extraRings: 0
-		}),
-		createPluginRegistration(InteractionManagerPluginPackage),
-		createPluginRegistration(SelectionPluginPackage),
-		createPluginRegistration(AnnotationPluginPackage, {
-			locked: { type: LockModeType.All },
-			autoCommit: false,
-			autoOpenLinks: false
-		}),
-		createPluginRegistration(ZoomPluginPackage, { defaultZoomLevel: ZoomMode.FitPage }),
-		createPluginRegistration(PanPluginPackage)
-	]);
+		linkPlugin()
+	];
 </script>
 
 <div class="@container relative flex h-full min-h-0 flex-col bg-white select-none">
-	{#if pdfEngine.error}
-		<ViewerFallback message="Could not load the PDF engine." failed={true} {streamUrl} {fileName} />
-	{:else if pdfEngine.isLoading || !pdfEngine.engine}
-		<ViewerFallback message="Loading…" failed={false} {streamUrl} {fileName} />
-	{:else}
-		<EmbedPDF engine={pdfEngine.engine} {plugins}>
-			{#snippet children({ activeDocumentId })}
-				{#if activeDocumentId}
-					{@const documentId = activeDocumentId}
-					<DocumentContent {documentId}>
-						{#snippet children(documentContent)}
-							{#if documentContent.isLoaded}
-								{#snippet renderPage(page: RenderPageProps)}
-									<PagePointerProvider {documentId} pageIndex={page.pageIndex}>
-										<RenderLayer
-											{documentId}
-											pageIndex={page.pageIndex}
-											scale={1}
-											dpr={1}
-											style="pointer-events: none"
-										/>
-										<SafeTilingLayer
-											{documentId}
-											pageIndex={page.pageIndex}
-											style="pointer-events: none"
-										/>
-										<AnnotationLayer
-											{documentId}
-											pageIndex={page.pageIndex}
-											annotationRenderers={linkRenderers}
-										/>
-										<PdfSelection {documentId} pageIndex={page.pageIndex} />
-									</PagePointerProvider>
-								{/snippet}
-								<PdfLinkNavigation />
-								<PanActivator {documentId} />
-								<ViewerToolbar {documentId} {streamUrl} {fileName} />
-								<div class="relative min-h-0 flex-1 overscroll-none">
-									<GlobalPointerProvider {documentId}>
-										<Viewport
-											{documentId}
-											tabindex={0}
-											role="region"
-											aria-label="PDF pages"
-											class="box-border h-full w-full bg-gray-100 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-neutral-900"
-										>
-											<ZoomGestureWrapper {documentId}>
-												<Scroller {documentId} {renderPage} />
-											</ZoomGestureWrapper>
-										</Viewport>
-									</GlobalPointerProvider>
-								</div>
-							{:else}
-								<ViewerFallback
-									message={documentContent.isError ? 'Could not open this PDF.' : 'Loading…'}
-									failed={documentContent.isError}
-									{streamUrl}
-									{fileName}
-								/>
-							{/if}
-						{/snippet}
-					</DocumentContent>
-				{:else}
-					<ViewerFallback message="Loading…" failed={false} {streamUrl} {fileName} />
-				{/if}
+	<Viewer
+		engine={() => localEngine()}
+		{plugins}
+		fetch={fetchWithProgress}
+		initialDocuments={[{ source: { kind: 'url', url: streamUrl } }]}
+	>
+		{#snippet fallback()}
+			<ViewerFallback message="Loading…" failed={false} {streamUrl} {fileName} />
+		{/snippet}
+		{#snippet error()}
+			<ViewerFallback
+				message="Could not load the PDF engine."
+				failed={true}
+				{streamUrl}
+				{fileName}
+			/>
+		{/snippet}
+		<DocumentGate>
+			{#snippet fallback()}
+				<ViewerFallback message={loadingMessage} failed={false} {streamUrl} {fileName} />
 			{/snippet}
-		</EmbedPDF>
-	{/if}
+			{#snippet error()}
+				<ViewerFallback message="Could not open this PDF." failed={true} {streamUrl} {fileName} />
+			{/snippet}
+			<ViewerToolbar {streamUrl} {fileName} />
+			<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+			<div
+				role="region"
+				aria-label="PDF pages"
+				tabindex="0"
+				class="relative min-h-0 flex-1 overscroll-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-neutral-900"
+			>
+				<Stage class="box-border h-full w-full bg-gray-100">
+					<RenderLayer />
+					<SelectionLayer />
+					<AnnotationLayer />
+					<LinkLayer />
+					{#snippet overlay()}
+						<PdfSelection />
+					{/snippet}
+				</Stage>
+			</div>
+		</DocumentGate>
+	</Viewer>
 </div>

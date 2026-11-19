@@ -3,6 +3,7 @@
 	import { toast } from 'svelte-sonner';
 	import CopyLinkButton from './CopyLinkButton.svelte';
 	import OpenLinkButton from './OpenLinkButton.svelte';
+	import { MAX_UPLOAD_BYTES } from '#lib/upload-limit.ts';
 
 	let { onuploaded, onunauthorized }: { onuploaded: () => void; onunauthorized?: () => void } =
 		$props();
@@ -23,13 +24,20 @@
 			fileInput!.value = '';
 			return;
 		}
+		if (file.size > MAX_UPLOAD_BYTES) {
+			toast.error(`File is too large. Maximum size is ${MAX_UPLOAD_BYTES / 1024 / 1024} MB.`);
+			fileInput!.value = '';
+			return;
+		}
 		uploading = true;
 		try {
-			const formData = new FormData();
-			formData.append('file', file);
 			const res = await fetch('/api/files', {
 				method: 'POST',
-				body: formData
+				headers: {
+					'content-type': 'application/pdf',
+					'x-file-name': encodeURIComponent(file.name)
+				},
+				body: file
 			});
 			if (res.status === 401) {
 				onunauthorized?.();

@@ -53,7 +53,7 @@ export const GET: RequestHandler = async ({ params, request }) => {
 	headers.set('content-type', 'application/pdf');
 	headers.set('accept-ranges', 'bytes');
 	headers.set('etag', head.httpEtag);
-	headers.set('cache-control', 'public, max-age=31536000, immutable');
+	headers.set('cache-control', 'private, max-age=31536000, immutable');
 	headers.set('x-robots-tag', 'noindex');
 
 	const rangeHeader = request.headers.get('range');

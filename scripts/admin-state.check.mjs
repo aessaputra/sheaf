@@ -233,6 +233,7 @@ const runUpload = new Function(
 	'toast',
 	'$state',
 	'$props',
+	'MAX_UPLOAD_BYTES',
 	scriptBody(upload) +
 		'\nfileInput = { files: [{ name: "file.pdf", type: "application/pdf" }], value: "file.pdf" }; return handleChange().then(() => ({ uploading, value: fileInput.value }));'
 );
@@ -242,7 +243,8 @@ const result = await runUpload(
 	},
 	{ error: (message) => errors.push(message) },
 	(value) => value,
-	() => ({ onuploaded() {} })
+	() => ({ onuploaded() {} }),
+	64 * 1024 * 1024
 );
 assert.match(errors[0], /Check the file list before retrying/);
 assert.deepEqual(result, { uploading: false, value: '' });

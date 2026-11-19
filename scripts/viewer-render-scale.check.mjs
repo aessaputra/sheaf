@@ -7,38 +7,23 @@ const source = readFileSync(
 	'utf8'
 );
 const ast = parse(source, { modern: true });
-const layers = [];
+let stage;
 function visit(node) {
 	if (!node || typeof node !== 'object') return;
-	if (node.type === 'Component' && node.name === 'PagePointerProvider') {
-		const children = node.fragment.nodes.filter((child) => child.type === 'Component');
-		assert.deepEqual(
-			children.map((child) => child.name),
-			['RenderLayer', 'SafeTilingLayer', 'AnnotationLayer', 'PdfSelection']
-		);
-		layers.push(...children);
-	}
+	if (node.type === 'Component' && node.name === 'Stage') stage = node;
 	for (const value of Object.values(node)) {
 		if (Array.isArray(value)) value.forEach(visit);
 		else if (value && typeof value === 'object') visit(value);
 	}
 }
 visit(ast.fragment);
-assert.equal(layers.length, 4);
-// Base layer keeps scale 1 but caps DPR at 1: full-coordinate preview,
-// memory no longer multiplied by devicePixelRatio squared. Tiles keep
-// device DPR internally so zoomed detail stays sharp.
-const base = layers[0];
-const scale = base.attributes.find((attribute) => attribute.name === 'scale');
-assert.equal(scale?.value.expression.value, 1, 'Reference base raster uses scale 1');
-const dpr = base.attributes.find((attribute) => attribute.name === 'dpr');
-assert.ok(dpr, 'Base RenderLayer must cap dpr');
-assert.equal(dpr.value.expression.value, 1, 'Base dpr cap is 1');
-// Tiling layer untouched: no dpr prop so it keeps window.devicePixelRatio.
-assert.ok(!layers[1].attributes.some((attribute) => attribute.name === 'dpr'));
-assert.ok(!layers[1].attributes.some((attribute) => attribute.name === 'scale'));
-assert.match(
-	source,
-	/createPluginRegistration\(TilingPluginPackage,\s*\{\s*tileSize: 768,\s*overlapPx: 2\.5,\s*extraRings: 0/
+assert.ok(stage, 'Stage rendered');
+const layers = stage.fragment.nodes.filter((node) => node.type === 'Component');
+assert.deepEqual(
+	layers.map((node) => node.name),
+	['RenderLayer', 'SelectionLayer', 'AnnotationLayer', 'LinkLayer']
 );
-console.log('Viewer tiling: reference base/detail layers and visible-only tile config PASS.');
+const renderLayer = layers.find((node) => node.name === 'RenderLayer');
+assert.equal(renderLayer.attributes.length, 0, 'RenderLayer takes no scale/dpr props in v3');
+
+console.log('PASS: Stage draws the v3 page layers in order without v2 scale props.');

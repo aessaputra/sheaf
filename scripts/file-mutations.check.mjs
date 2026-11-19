@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { moduleUrl } from './check-source.mjs';
-import { limitBodyStream } from '../src/lib/server/body-limit.ts';
+import { MAX_UPLOAD_BYTES } from '../src/lib/upload-limit.ts';
 
 const root = new URL('../', import.meta.url);
 const logs = [];
@@ -12,7 +12,22 @@ const rows = new Map();
 let fault;
 const fixture = {
 	error: (status, message) => Object.assign(new Error(message), { status }),
-	limitBodyStream,
+	FixedLengthStream: class extends TransformStream {
+		constructor(length) {
+			let written = 0;
+			super({
+				transform(chunk, controller) {
+					written += chunk.byteLength;
+					if (written > length) throw new Error('fixed length exceeded');
+					controller.enqueue(chunk);
+				},
+				flush() {
+					if (written !== length) throw new Error('fixed length not reached');
+				}
+			});
+		}
+	},
+	MAX_UPLOAD_BYTES,
 	env: {
 		PDFS: {
 			async put(key, stream) {
@@ -54,20 +69,25 @@ async function load(path) {
 	source = source.replace(/^import .* from '(?!\.\/\$types)[^']+';$/gm, '');
 	return import(
 		moduleUrl(
-			`const { error, env, drizzle, eq, pdfFiles, limitBodyStream } = globalThis.__filesCheck;\n${source}`
+			`const { error, env, drizzle, eq, pdfFiles, FixedLengthStream, MAX_UPLOAD_BYTES } = globalThis.__filesCheck;\n${source}`
 		)
 	);
 }
 const { POST } = await load('src/routes/api/files/+server.ts');
 const { DELETE } = await load('src/routes/api/files/[slug]/+server.ts');
-const upload = () => {
-	const form = new FormData();
-	form.set('file', new File(['%PDF-new'], 'private-name.pdf', { type: 'application/pdf' }));
-	return POST({
+const upload = (body = '%PDF-new', name = 'private-name.pdf') =>
+	POST({
 		locals: { session: true },
-		request: new Request('https://sheaf.example.test/api/files', { method: 'POST', body: form })
+		request: new Request('https://sheaf.example.test/api/files', {
+			method: 'POST',
+			headers: {
+				'content-type': 'application/pdf',
+				'content-length': String(body.length),
+				'x-file-name': encodeURIComponent(name)
+			},
+			body
+		})
 	});
-};
 const remove = (slug) => DELETE({ locals: { session: true }, params: { slug } });
 const originalRandom = crypto.getRandomValues;
 try {
@@ -76,22 +96,31 @@ try {
 			POST({
 				locals: { session: true },
 				request: {
-					headers: new Headers({ 'content-length': String(28 * 1024 * 1024) }),
+					headers: new Headers({
+						'content-type': 'application/pdf',
+						'content-length': String(MAX_UPLOAD_BYTES + 1)
+					}),
 					body: null
 				}
 			}),
 		{ status: 413 },
-		'oversized declared body is rejected before parsing'
+		'oversized upload is rejected from its declared length'
 	);
-	const limitedStream = limitBodyStream(
-		new Request('https://sheaf.example.test/api/files', {
-			method: 'POST',
-			body: new Uint8Array(1024)
-		}),
-		100
-	);
-	await assert.rejects(() => new Response(limitedStream.stream).arrayBuffer());
-	assert.equal(limitedStream.exceeded(), true, 'oversized streamed body is rejected while reading');
+	await assert.rejects(() => upload('not a pdf'), { status: 400 }, 'non-PDF content is rejected');
+	const lyingUpload = (declared) => ({
+		locals: { session: true },
+		request: {
+			headers: new Headers({
+				'content-type': 'application/pdf',
+				'content-length': String(declared),
+				'x-file-name': encodeURIComponent('private-name.pdf')
+			}),
+			body: new Blob(['%PDF-new']).stream()
+		}
+	});
+	await assert.rejects(() => POST(lyingUpload(9)), { status: 500 }, 'short body fails upload');
+	await assert.rejects(() => POST(lyingUpload(7)), { status: 500 }, 'long body fails upload');
+	assert.equal(objects.size, 0, 'length mismatch leaves no stored object');
 	crypto.getRandomValues = (bytes) => bytes.fill(0);
 	rows.set('00000000', { slug: '00000000', r2Key: 'pdfs/00000000.pdf' });
 	objects.set('pdfs/00000000.pdf', '%PDF-original');

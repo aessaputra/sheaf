@@ -1,38 +1,36 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-const source = readFileSync(
-	new URL('../src/routes/v/[slug]/HeadlessViewer.svelte', import.meta.url),
-	'utf8'
+const root = new URL('../', import.meta.url);
+const pkg = JSON.parse(readFileSync(new URL('package.json', root), 'utf8'));
+const viewer = readFileSync(new URL('src/routes/v/[slug]/HeadlessViewer.svelte', root), 'utf8');
+
+const embedpdf = Object.entries(pkg.dependencies).filter(([name]) => name.startsWith('@embedpdf/'));
+assert.deepEqual(
+	Object.fromEntries(embedpdf),
+	{ '@embedpdf/engine': '3.3.0', '@embedpdf/svelte': '3.3.0' },
+	'only the v3 engine and Svelte binding are direct dependencies'
 );
-assert.match(
-	source,
-	/createPluginRegistration\(PanPluginPackage\)/,
-	'Use the reference Pan registration and its touch-only default'
-);
-const { PanPluginPackage } = await import('@embedpdf/plugin-pan');
-assert.equal(PanPluginPackage.manifest.defaultConfig.defaultMode, 'mobile');
-const registrations = [...source.matchAll(/createPluginRegistration\((\w+PluginPackage)/g)].map(
-	(match) => match[1]
-);
-const manifests = [];
-for (const name of registrations) {
-	const imports = [...source.matchAll(/import\s*\{([^}]+)\}\s*from\s*'(@embedpdf\/[^']+)'/g)];
-	const declaration = imports.find((match) =>
-		match[1].split(',').some((part) => part.trim() === name)
+
+assert.match(viewer, /import \{ localEngine \} from '@embedpdf\/engine'/);
+assert.match(viewer, /engine=\{\(\) => localEngine\(\)\}/, 'Viewer owns the engine lifecycle');
+for (const subpath of [
+	'runtime',
+	'stage',
+	'render',
+	'selection',
+	'annotation',
+	'interaction',
+	'link'
+]) {
+	assert.match(
+		viewer,
+		new RegExp(`from '@embedpdf/svelte/${subpath}'`),
+		`imports the v3 ${subpath} binding`
 	);
-	assert.ok(declaration, `import exists for ${name}`);
-	const packageName = declaration[2].replace(/\/svelte$/, '');
-	const exports = await import(packageName);
-	manifests.push(exports[name].manifest);
 }
-const provided = new Set(manifests.flatMap((manifest) => manifest.provides));
-for (const manifest of manifests) {
-	for (const capability of manifest.requires) {
-		assert.ok(
-			provided.has(capability),
-			`Missing required capability: ${capability} for plugin ${manifest.id}`
-		);
-	}
-}
-console.log('PASS: viewer registrations satisfy installed plugin manifests.');
+assert.doesNotMatch(viewer, /@embedpdf\/(core|models|plugin-|engines)/, 'no v2 packages');
+assert.doesNotMatch(viewer, /usePdfiumEngine|createPluginRegistration|LockModeType/);
+assert.doesNotMatch(viewer, /cdn\.jsdelivr\.net|pdfium\.wasm/);
+
+console.log('PASS: viewer uses only @embedpdf/svelte 3.3.0 + @embedpdf/engine 3.3.0.');
