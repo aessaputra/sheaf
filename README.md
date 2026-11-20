@@ -12,7 +12,7 @@ Upload a PDF, share the link. A small, single-admin PDF sharing app on Cloudflar
 - SvelteKit 3, Svelte 5, Tailwind CSS 4, and EmbedPDF 3.3.0 (PDFium).
 
 > [!WARNING]
-> Anyone with a share link can view and download the PDF. Links are not private access controls. Files are publicly cached for up to a year; deleting a file does not recall downloaded or cached copies.
+> Anyone with a share link can view and download the PDF. Links are not private access controls. Browsers may cache a downloaded copy for up to a year; deleting a file does not recall downloaded or cached copies.
 
 ## Local setup
 
@@ -46,7 +46,7 @@ Open `/admin`, sign in, upload a PDF, and copy its `/v/[slug]` link. Local D1 an
 | `OIDC_ALLOWED_EMAILS` / `OIDC_ALLOWED_SUBS`                                | Optional allowlists; at least one entry required for OIDC  |
 | `CLOUDFLARE_ACCOUNT_ID` / `CLOUDFLARE_DATABASE_ID` / `CLOUDFLARE_D1_TOKEN` | Local shell only, for remote D1 via Drizzle CLI            |
 
-`wrangler.jsonc` binds `DB` to D1 and `PDFS` to R2. Uploads stream through the Worker into R2; no S3 credentials needed. Password login is rate-limited to 3 attempts per client IP per 60 seconds. The viewer fetches its pinned PDFium WASM from jsDelivr.
+`wrangler.jsonc` binds `DB` to D1 and `PDFS` to R2. Uploads stream through the Worker into R2; no S3 credentials needed. Password login is rate-limited to 3 attempts per client IP per 60 seconds. The viewer loads its pinned PDFium WASM and worker from the app's own build, served as static assets; no third-party CDN is contacted.
 
 For OIDC, register a confidential client (Authorization Code + PKCE S256, scopes `openid profile email`), set the fields above via `npx wrangler secret put <NAME>`, and verify login, allowlist denial, password fallback, logout, and logged-out viewing.
 
