@@ -2,14 +2,14 @@
 
 Upload a PDF, share the link. A small, single-admin PDF sharing app on Cloudflare Workers.
 
-[Live app](https://sheaf.aessaputra.workers.dev) · [Local setup](#local-setup) · [Configuration](#configuration) · [Deploy](#deploy)
+[Live app](https://sheaf.aes.my.id/v/84xy5tw1) · [Local setup](#local-setup) · [Configuration](#configuration) · [Deploy](#deploy)
 
 ## Features
 
 - Password-protected admin: upload, list, copy links, and delete PDFs; optional OIDC login.
 - Public viewer with page navigation, zoom presets, text selection, and downloads.
 - PDFs stored in R2; file metadata stored in D1 with Drizzle ORM.
-- SvelteKit 3, Svelte 5, Tailwind CSS 4, and EmbedPDF 2.15.1 (PDFium).
+- SvelteKit 3, Svelte 5, Tailwind CSS 4, and EmbedPDF 3.3.0 (PDFium).
 
 > [!WARNING]
 > Anyone with a share link can view and download the PDF. Links are not private access controls. Files are publicly cached for up to a year; deleting a file does not recall downloaded or cached copies.
