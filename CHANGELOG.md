@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-21
+
+### Added
+
+- Root 404/error page and a static fallback for fatal render errors.
+- `MAINTENANCE` flag that returns HTML 503 pages with `Retry-After` and JSON 503 for API routes.
+
+### Changed
+
+- API errors now return JSON `{ status, message }` through a shared helper.
+
 ## [1.0.0] - 2026-11-20
 
 ### Added
