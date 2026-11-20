@@ -40,10 +40,11 @@ const oidcEmpty = {
 assert.deepEqual(check(true, {}), {
 	ADMIN_PASSWORD: undefined,
 	SESSION_SECRET: undefined,
-	...oidcEmpty
+	...oidcEmpty,
+	MAINTENANCE: false
 });
 const valid = { ADMIN_PASSWORD: 'synthetic-admin-password', SESSION_SECRET: 's'.repeat(32) };
-assert.deepEqual(check(false, valid), { ...valid, ...oidcEmpty });
+assert.deepEqual(check(false, valid), { ...valid, ...oidcEmpty, MAINTENANCE: false });
 for (const name of Object.keys(valid)) {
 	for (const value of [
 		undefined,

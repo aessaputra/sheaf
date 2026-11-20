@@ -72,7 +72,8 @@ source = source
 	.replace(
 		"from '#lib/server/body-limit.ts'",
 		`from '${new URL('src/lib/server/body-limit.ts', root).href}'`
-	);
+	)
+	.replace("from '#lib/server/http.ts'", `from '${new URL('src/lib/server/http.ts', root).href}'`);
 const { POST } = await import(moduleUrl(source));
 for (const body of ['x'.repeat(2048), JSON.stringify({ password: 'x'.repeat(2048) })]) {
 	const response = await POST({

@@ -13,16 +13,22 @@ async function transpile(path, replacements = []) {
 	return moduleUrl(source);
 }
 const sessionUrl = await transpile('src/lib/server/session.ts');
+const httpUrl = await transpile('src/lib/server/http.ts');
 const { COOKIE_NAME, createSessionToken } = await import(sessionUrl);
-const { handle } = await import(
-	await transpile('src/hooks.server.ts', [
+const hooksUrl = (maintenance) =>
+	transpile('src/hooks.server.ts', [
 		[
-			"import { SESSION_SECRET } from '$app/env/private';",
-			`const SESSION_SECRET = ${JSON.stringify(secret)};`
+			"import errorPage from './error.html?raw';",
+			`const errorPage = '<p class="status">%sveltekit.status%</p><h1>%sveltekit.error.message%</h1>';`
 		],
-		["from '#lib/server/session.ts'", `from '${sessionUrl}'`]
-	])
-);
+		[
+			"import { MAINTENANCE, SESSION_SECRET } from '$app/env/private';",
+			`const MAINTENANCE = ${maintenance}; const SESSION_SECRET = ${JSON.stringify(secret)};`
+		],
+		["from '#lib/server/session.ts'", `from '${sessionUrl}'`],
+		["from '#lib/server/http.ts'", `from '${httpUrl}'`]
+	]);
+const { handle } = await import(await hooksUrl(false));
 async function invoke(path, token) {
 	const event = {
 		url: new URL(path, 'https://sheaf.example.test'),
@@ -83,3 +89,43 @@ for (const path of ['/api/files', '/api/files/slug']) {
 	}
 }
 console.log('Auth hooks checks passed: exact OIDC routes, auth boundaries, and real sessions');
+
+const { handle: maintenanceHandle } = await import(await hooksUrl(true));
+const maintenanceEvent = (path) => ({
+	url: new URL(path, 'https://sheaf.example.test'),
+	cookies: { get: () => null },
+	locals: {}
+});
+for (const path of ['/', '/admin', '/v/slug']) {
+	const response = await maintenanceHandle({
+		event: maintenanceEvent(path),
+		resolve() {
+			assert.fail(`resolve must not run for ${path}`);
+		}
+	});
+	assert.equal(response.status, 503, path);
+	assert.equal(response.headers.get('retry-after'), '600', path);
+	assert.equal(response.headers.get('cache-control'), 'no-store', path);
+	assert.match(response.headers.get('content-type'), /^text\/html/, path);
+	const body = await response.text();
+	assert.ok(body.includes('503'), path);
+	assert.ok(body.includes('Service temporarily unavailable. Please try again shortly.'), path);
+	assert.ok(!body.includes('%sveltekit.'), path);
+}
+for (const path of ['/api/files', '/api/login']) {
+	const response = await maintenanceHandle({
+		event: maintenanceEvent(path),
+		resolve() {
+			assert.fail(`resolve must not run for ${path}`);
+		}
+	});
+	assert.equal(response.status, 503, path);
+	assert.equal(response.headers.get('retry-after'), '600', path);
+	assert.deepEqual(await response.json(), {
+		status: 503,
+		message: 'Service temporarily unavailable.'
+	});
+}
+console.log(
+	'Maintenance checks passed: pages return HTML 503 with Retry-After, API returns JSON 503'
+);

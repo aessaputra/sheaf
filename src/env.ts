@@ -55,5 +55,12 @@ export const variables = defineEnvVars({
 		schema: (value): string | undefined => (value?.trim() ? value : undefined),
 		description:
 			'Comma-separated OIDC subject (sub) values allowed to sign in via OIDC. Empty means no sub allowlist.'
+	},
+	MAINTENANCE: {
+		schema: (value): boolean => {
+			const flag = value?.trim();
+			return flag === '1' || flag === 'true';
+		},
+		description: 'Set to 1 to serve 503 maintenance responses. Unset or 0 keeps the app online.'
 	}
 });

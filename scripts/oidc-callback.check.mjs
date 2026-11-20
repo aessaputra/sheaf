@@ -25,12 +25,17 @@ async function load(path, route = false) {
 				`const {$1} = globalThis.__callback['${name}'];`
 			);
 		}
+		source = source.replace(
+			"import { jsonError } from '#lib/server/http.ts';",
+			'const { jsonError } = globalThis.__callback.http;'
+		);
 	}
 	return import(moduleUrl(source));
 }
 const oidc = await load('src/lib/server/oidc.ts');
 const transaction = await load('src/lib/server/oidc-transaction.ts');
 const session = await load('src/lib/server/session.ts');
+const http = await load('src/lib/server/http.ts');
 const config = {
 	OIDC_ISSUER: 'https://id.example.test',
 	OIDC_CLIENT_ID: 'sheaf',
@@ -78,7 +83,8 @@ async function invoke(options = {}) {
 		oauth,
 		oidc,
 		'oidc-transaction': transaction,
-		session
+		session,
+		http
 	};
 	const calls = [];
 	globalThis.fetch = async (input, init) => {

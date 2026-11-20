@@ -19,7 +19,8 @@ const source = (await readFile(new URL('src/routes/api/login/+server.ts', root),
 	.replace(
 		"from '#lib/server/body-limit.ts'",
 		`from '${new URL('src/lib/server/body-limit.ts', root).href}'`
-	);
+	)
+	.replace("from '#lib/server/http.ts'", `from '${new URL('src/lib/server/http.ts', root).href}'`);
 const keys = [];
 let result = { success: true };
 globalThis.__loginRateLimitEnv = {
@@ -70,7 +71,8 @@ try {
 			outcome === 'allowed'
 				? { ok: true }
 				: {
-						error:
+						status: outcome === 'denied' ? 429 : 503,
+						message:
 							outcome === 'denied'
 								? 'Too many login attempts. Try again later.'
 								: 'Login temporarily unavailable.'

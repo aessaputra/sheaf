@@ -3,6 +3,7 @@ import * as env from '$app/env/private';
 import { dev } from '$app/env';
 import * as oauth from 'oauth4webapi';
 import { isOidcAllowed, getOidcConfig, withOidcDeadline } from '#lib/server/oidc.ts';
+import { jsonError } from '#lib/server/http.ts';
 import { OIDC_TRANSACTION_COOKIE, verifyOidcTransaction } from '#lib/server/oidc-transaction.ts';
 import { COOKIE_NAME, MAX_AGE, createSessionToken } from '#lib/server/session.ts';
 
@@ -10,7 +11,7 @@ export const GET: RequestHandler = async ({ cookies, request, url }) => {
 	const raw = cookies.get(OIDC_TRANSACTION_COOKIE);
 	cookies.delete(OIDC_TRANSACTION_COOKIE, { path: '/' });
 	const config = getOidcConfig(env, dev);
-	if (!config) return new Response('OIDC not configured.', { status: 503 });
+	if (!config) return jsonError(503, 'OIDC not configured.');
 	const { issuer } = config;
 	const saved = await verifyOidcTransaction(raw, config.sessionSecret);
 	if (
@@ -20,7 +21,7 @@ export const GET: RequestHandler = async ({ cookies, request, url }) => {
 		url.searchParams.getAll('code').length !== 1 ||
 		!url.searchParams.get('code')
 	)
-		return new Response('Invalid OIDC callback.', { status: 400 });
+		return jsonError(400, 'Invalid OIDC callback.');
 	const client: oauth.Client = { client_id: config.clientId, [oauth.clockTolerance]: 0 };
 	let as: oauth.AuthorizationServer;
 	try {
@@ -33,14 +34,14 @@ export const GET: RequestHandler = async ({ cookies, request, url }) => {
 			stage: 'callback-discovery',
 			category: 'provider-or-metadata'
 		});
-		return new Response('OIDC discovery failed.', { status: 502 });
+		return jsonError(502, 'OIDC discovery failed.');
 	}
 	let params: URLSearchParams;
 	try {
 		params = oauth.validateAuthResponse(as, client, url.searchParams, saved.state);
 	} catch {
 		console.error('OIDC failure', { stage: 'callback-validation', category: 'invalid-response' });
-		return new Response('Invalid OIDC callback.', { status: 400 });
+		return jsonError(400, 'Invalid OIDC callback.');
 	}
 	let claims: oauth.IDToken | undefined;
 	let stage = 'token-exchange';
@@ -76,7 +77,7 @@ export const GET: RequestHandler = async ({ cookies, request, url }) => {
 		if (!claims?.sub) throw new Error('Missing subject');
 	} catch {
 		console.error('OIDC failure', { stage, category: 'provider-or-token' });
-		return new Response('OIDC login failed.', { status: 502 });
+		return jsonError(502, 'OIDC login failed.');
 	}
 	if (
 		!isOidcAllowed({

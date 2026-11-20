@@ -21,8 +21,16 @@ const config = {
 	SESSION_SECRET: 'test-only-secret-not-used-in-production'
 };
 const transaction = await load('src/lib/server/oidc-transaction.ts');
+const http = await load('src/lib/server/http.ts');
 async function invoke(overrides = {}, metadata = {}, dev = false, fetcher) {
-	globalThis.__oidcCheck = { oidc, oauth, transaction, config: { ...config, ...overrides }, dev };
+	globalThis.__oidcCheck = {
+		oidc,
+		oauth,
+		transaction,
+		http,
+		config: { ...config, ...overrides },
+		dev
+	};
 	globalThis.fetch =
 		fetcher ??
 		(async () =>
@@ -42,6 +50,10 @@ async function invoke(overrides = {}, metadata = {}, dev = false, fetcher) {
 		[
 			/import \{[^}]+\} from '#lib\/server\/oidc-transaction.ts';/,
 			'const { OIDC_TRANSACTION_COOKIE, OIDC_TRANSACTION_MAX_AGE, encodeOidcTransaction } = globalThis.__oidcCheck.transaction;'
+		],
+		[
+			"import { jsonError } from '#lib/server/http.ts';",
+			'const { jsonError } = globalThis.__oidcCheck.http;'
 		]
 	]);
 	const writes = [];

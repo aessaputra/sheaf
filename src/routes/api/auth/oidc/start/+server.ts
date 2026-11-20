@@ -3,6 +3,7 @@ import * as env from '$app/env/private';
 import { dev } from '$app/env';
 import * as oauth from 'oauth4webapi';
 import { getOidcConfig, withOidcDeadline, validatedOidcUrl } from '#lib/server/oidc.ts';
+import { jsonError } from '#lib/server/http.ts';
 import {
 	OIDC_TRANSACTION_COOKIE,
 	OIDC_TRANSACTION_MAX_AGE,
@@ -11,7 +12,7 @@ import {
 
 export const GET: RequestHandler = async ({ cookies, request }) => {
 	const config = getOidcConfig(env, dev);
-	if (!config) return new Response('OIDC not configured.', { status: 503 });
+	if (!config) return jsonError(503, 'OIDC not configured.');
 	const { issuer } = config;
 	let url: URL;
 	try {
@@ -24,7 +25,7 @@ export const GET: RequestHandler = async ({ cookies, request }) => {
 		url = validatedOidcUrl(as.authorization_endpoint);
 	} catch {
 		console.error('OIDC failure', { stage: 'start-discovery', category: 'provider-or-metadata' });
-		return new Response('OIDC discovery failed.', { status: 502 });
+		return jsonError(502, 'OIDC discovery failed.');
 	}
 
 	const state = oauth.generateRandomState();
